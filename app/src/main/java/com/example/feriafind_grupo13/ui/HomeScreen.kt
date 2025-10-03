@@ -11,6 +11,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.feriafind_grupo13.R
+import com.example.feriafind_grupo13.ui.screens.HomeScreenAdaptativa
 import com.example.feriafind_grupo13.ui.theme.FeriaFind_Grupo13Theme
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -76,18 +77,18 @@ fun HomeScreen(){
     }
 }
 
-@Preview(showBackground = true)// para mostrar en el preview el modo oscuro y normal
+@Preview(showBackground = true, device = "spec:width=360dp,height=640dp", name = "Light - Compact")
 @Composable
-fun HomeScreenPreview() {
+fun PreviewAdaptativaLight() {
     FeriaFind_Grupo13Theme(darkTheme = false) {
-        HomeScreen()
+        HomeScreenAdaptativa()
     }
 }
 
-@Preview(showBackground = true)
+@Preview(showBackground = true, device = "spec:width=360dp,height=640dp", name = "Dark - Compact")
 @Composable
-fun HomeScreenDarkPreview() {
+fun PreviewAdaptativaDark() {
     FeriaFind_Grupo13Theme(darkTheme = true) {
-        HomeScreen()
+        HomeScreenAdaptativa()
     }
 }

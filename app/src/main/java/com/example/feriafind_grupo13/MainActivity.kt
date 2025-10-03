@@ -14,6 +14,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import com.example.feriafind_grupo13.ui.HomeScreen
+import com.example.feriafind_grupo13.ui.screens.HomeScreenAdaptativa
+import com.example.feriafind_grupo13.ui.screens.HomeScreenCompacta
 import com.example.feriafind_grupo13.ui.theme.FeriaFind_Grupo13Theme
 
 class MainActivity : ComponentActivity() {
@@ -22,6 +24,7 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             FeriaFind_Grupo13Theme {
+                HomeScreenAdaptativa()
                 /*
                 Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
                     Greeting(
