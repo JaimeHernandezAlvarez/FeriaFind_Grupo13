@@ -1,4 +1,4 @@
-package com.example.feriafind_grupo13.ui
+package com.example.feriafind_grupo13.ui.screens
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
@@ -11,7 +11,6 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.feriafind_grupo13.R
-import com.example.feriafind_grupo13.ui.screens.HomeScreenAdaptativa
 import com.example.feriafind_grupo13.ui.theme.FeriaFind_Grupo13Theme
 
 @OptIn(ExperimentalMaterial3Api::class)
