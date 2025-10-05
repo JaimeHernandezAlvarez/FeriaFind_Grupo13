@@ -9,12 +9,18 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.feriafind_grupo13.R
-
+import com.example.feriafind_grupo13.navigation.Screen
+import androidx.navigation.NavController
+import com.example.feriafind_grupo13.viewmodel.MainViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun HomeScreenCompacta() {
+fun HomeScreenCompacta(
+    navControler : NavController,
+    viewModel: MainViewModel = viewModel()
+) {
     Scaffold(
         topBar = {
             TopAppBar(title = { Text("FeriaFind") })
@@ -34,8 +40,8 @@ fun HomeScreenCompacta() {
             )
 
             Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-                Button(onClick = { /*INICIAR SESSION*/ }) { Text("Iniciar sesión") }
-                Button(onClick = { /*REGISTRARSE*/ }) { Text("Registrarse") }
+                Button(onClick = { /*INICIAR SESSION*/}) { Text("Iniciar sesión") }
+                Button(onClick = { viewModel.navigateTo(Screen.Register)  }) { Text("Registrarse") }
             }
 
             Image(

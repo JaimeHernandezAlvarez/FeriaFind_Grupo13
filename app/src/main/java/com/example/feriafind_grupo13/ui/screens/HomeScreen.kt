@@ -10,8 +10,11 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavController
 import com.example.feriafind_grupo13.R
 import com.example.feriafind_grupo13.ui.theme.FeriaFind_Grupo13Theme
+import com.example.feriafind_grupo13.viewmodel.MainViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -76,9 +79,11 @@ fun HomeScreen(){
     }
 }
 
-@Preview(showBackground = true, device = "spec:width=360dp,height=640dp", name = "Light - Compact")
+/*@Preview(showBackground = true, device = "spec:width=360dp,height=640dp", name = "Light - Compact")
 @Composable
-fun PreviewAdaptativaLight() {
+fun PreviewAdaptativaLight(
+
+) {
     FeriaFind_Grupo13Theme(darkTheme = false) {
         HomeScreenAdaptativa()
     }
@@ -86,8 +91,9 @@ fun PreviewAdaptativaLight() {
 
 @Preview(showBackground = true, device = "spec:width=360dp,height=640dp", name = "Dark - Compact")
 @Composable
-fun PreviewAdaptativaDark() {
+fun PreviewAdaptativaDark(
+) {
     FeriaFind_Grupo13Theme(darkTheme = true) {
         HomeScreenAdaptativa()
     }
-}
+}*/
