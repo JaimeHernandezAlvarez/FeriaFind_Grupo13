@@ -1,4 +1,4 @@
-package com.example.feriafind_grupo13.ui.screens
+package com.example.feriafind_grupo13.ui.screens.autenticacion
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
