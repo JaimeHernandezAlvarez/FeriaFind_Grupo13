@@ -40,7 +40,7 @@ fun HomeScreenCompacta(
             )
 
             Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-                Button(onClick = { /*INICIAR SESSION*/}) { Text("Iniciar sesión") }
+                Button(onClick = { viewModel.navigateTo(Screen.Login)}) { Text("Iniciar sesión") }
                 Button(onClick = { viewModel.navigateTo(Screen.Register)  }) { Text("Registrarse") }
             }
 
