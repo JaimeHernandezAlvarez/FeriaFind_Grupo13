@@ -21,6 +21,7 @@ import com.example.feriafind_grupo13.navigation.Screen
 import com.example.feriafind_grupo13.ui.screens.HomeScreenCompacta
 import com.example.feriafind_grupo13.ui.screens.autenticacion.LoginScreen
 import com.example.feriafind_grupo13.ui.screens.autenticacion.RegisterScreen
+import com.example.feriafind_grupo13.ui.screens.principal.MainScreen
 import com.example.feriafind_grupo13.ui.theme.FeriaFind_Grupo13Theme
 import com.example.feriafind_grupo13.viewmodel.MainViewModel
 import kotlinx.coroutines.flow.collectLatest
@@ -69,9 +70,11 @@ class MainActivity : ComponentActivity() {
                         composable(route = Screen.Register.route) {
                             RegisterScreen(navController = navController, viewModel = viewModel)
                         }
-                        // Se añade el composable para la ruta de Login, que faltaba.
                         composable(route = Screen.Login.route) {
                             LoginScreen(navController = navController, viewModel = viewModel)
+                        }
+                        composable(route = Screen.Main.route) {
+                            MainScreen()
                         }
                     }
                 }

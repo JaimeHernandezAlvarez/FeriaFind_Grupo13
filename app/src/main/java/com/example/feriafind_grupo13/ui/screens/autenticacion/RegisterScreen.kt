@@ -1,16 +1,23 @@
 package com.example.feriafind_grupo13.ui.screens.autenticacion
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
+import com.example.feriafind_grupo13.R
+import com.example.feriafind_grupo13.navigation.Screen
+import com.example.feriafind_grupo13.ui.components.AuthCard
 import com.example.feriafind_grupo13.ui.components.BotonAuth
 import com.example.feriafind_grupo13.ui.components.CampoDeTextoAuth
 import com.example.feriafind_grupo13.ui.components.CampoDeTextoContrasena
@@ -22,14 +29,11 @@ fun RegisterScreen(
     navController: NavController,
     viewModel: MainViewModel = viewModel()
 ) {
-    // PASO 1: Definir estados para los valores de los campos.
     var name by remember { mutableStateOf("") }
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var confirmPassword by remember { mutableStateOf("") }
 
-    // PASO 2: Definir estados para los mensajes de error de cada campo.
-    // Usamos un String que puede ser nulo. Si es nulo, no hay error.
     var nameError by remember { mutableStateOf<String?>(null) }
     var emailError by remember { mutableStateOf<String?>(null) }
     var passwordError by remember { mutableStateOf<String?>(null) }
@@ -51,100 +55,78 @@ fun RegisterScreen(
             modifier = Modifier
                 .padding(innerPadding)
                 .fillMaxSize()
-                .padding(16.dp),
+                .padding(16.dp)
+                .verticalScroll(rememberScrollState()),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
-            Text("Crea tu cuenta", style = MaterialTheme.typography.headlineLarge)
-            Spacer(modifier = Modifier.height(32.dp))
-
-            // PASO 3: Usar tus componentes `AuthTextField` y `PasswordTextField`.
-            // Les pasamos tanto el valor como el estado de error.
-            CampoDeTextoAuth(
-                value = name,
-                onValueChange = {
-                    name = it
-                    nameError = null // Limpia el error cuando el usuario escribe
-                },
-                label = "Nombre de usuario",
-                isError = nameError != null,
-                errorMessage = nameError ?: ""
-            )
-            Spacer(modifier = Modifier.height(8.dp))
-
-            CampoDeTextoAuth(
-                value = email,
-                onValueChange = {
-                    email = it
-                    emailError = null
-                },
-                label = "Correo Electrónico",
-                isError = emailError != null,
-                errorMessage = emailError ?: "",
-                keyboardType = KeyboardType.Email
-            )
-            Spacer(modifier = Modifier.height(8.dp))
-
-            CampoDeTextoContrasena(
-                value = password,
-                onValueChange = {
-                    password = it
-                    passwordError = null
-                },
-                label = "Contraseña",
-                isError = passwordError != null,
-                errorMessage = passwordError ?: ""
-            )
-            Spacer(modifier = Modifier.height(8.dp))
-
-            CampoDeTextoContrasena(
-                value = confirmPassword,
-                onValueChange = {
-                    confirmPassword = it
-                    confirmPasswordError = null
-                },
-                label = "Confirmar contraseña",
-                isError = confirmPasswordError != null,
-                errorMessage = confirmPasswordError ?: ""
+            Image(
+                painter = painterResource(id = R.drawable.logo),
+                contentDescription = "Logo",
+                modifier = Modifier.size(100.dp)
             )
             Spacer(modifier = Modifier.height(24.dp))
 
-            // PASO 4: Usar tu componente `AuthButton` y poner la lógica de validación.
+            AuthCard(modifier = Modifier.fillMaxWidth()) {
+                Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    CampoDeTextoAuth(
+                        value = name,
+                        onValueChange = { name = it; nameError = null },
+                        label = "Nombre de usuario",
+                        isError = nameError != null,
+                        errorMessage = nameError ?: ""
+                    )
+
+                    CampoDeTextoAuth(
+                        value = email,
+                        onValueChange = { email = it; emailError = null },
+                        label = "Correo Electrónico",
+                        isError = emailError != null,
+                        errorMessage = emailError ?: "",
+                        keyboardType = KeyboardType.Email
+                    )
+
+                    CampoDeTextoContrasena(
+                        value = password,
+                        onValueChange = { password = it; passwordError = null },
+                        label = "Contraseña",
+                        isError = passwordError != null,
+                        errorMessage = passwordError ?: ""
+                    )
+
+                    CampoDeTextoContrasena(
+                        value = confirmPassword,
+                        onValueChange = { confirmPassword = it; confirmPasswordError = null },
+                        label = "Confirmar contraseña",
+                        isError = confirmPasswordError != null,
+                        errorMessage = confirmPasswordError ?: ""
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(24.dp))
+
             BotonAuth(
                 text = "Registrarse",
                 onClick = {
-                    // Reiniciamos los errores
-                    nameError = null
-                    emailError = null
-                    passwordError = null
-                    confirmPasswordError = null
-                    var isValid = true
+                    nameError = if (name.isBlank()) "El nombre no puede estar vacío" else null
+                    emailError = if (!email.contains("@") || email.isBlank()) "Ingresa un correo válido" else null
+                    passwordError = if (password.length < 6) "La contraseña debe tener al menos 6 caracteres" else null
+                    confirmPasswordError = if (password != confirmPassword) "Las contraseñas no coinciden" else null
 
-                    // Validaciones
-                    if (name.isBlank()) {
-                        nameError = "El nombre no puede estar vacío"
-                        isValid = false
-                    }
-                    if (!email.contains("@") || email.isBlank()) {
-                        emailError = "Ingresa un correo válido"
-                        isValid = false
-                    }
-                    if (password.length < 6) {
-                        passwordError = "La contraseña debe tener al menos 6 caracteres"
-                        isValid = false
-                    }
-                    if (password != confirmPassword) {
-                        confirmPasswordError = "Las contraseñas no coinciden"
-                        isValid = false
-                    }
-
-                    if (isValid) {
-                        // TODO: Aquí llamarías al ViewModel para registrar al usuario.
-                        // viewModel.registerUser(name, email, password)
-                        // Por ahora, navegamos a la pantalla principal.
+                    if (nameError == null && emailError == null && passwordError == null && confirmPasswordError == null) {
+                        navController.navigate(Screen.Main.route) {
+                            popUpTo(navController.graph.startDestinationId) { inclusive = true }
+                            launchSingleTop = true
+                        }
                     }
                 }
             )
+            Spacer(modifier = Modifier.height(12.dp))
+
+            TextButton(onClick = { navController.navigate(Screen.Login.route) }) {
+                Text("¿Ya tienes cuenta? Inicia sesión")
+            }
         }
     }
 }
