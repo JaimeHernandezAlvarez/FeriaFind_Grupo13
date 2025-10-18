@@ -10,9 +10,9 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.example.feriafind_grupo13.navigation.Screen
-import com.example.feriafind_grupo13.ui.components.AuthButton
-import com.example.feriafind_grupo13.ui.components.AuthTextField
-import com.example.feriafind_grupo13.ui.components.PasswordTextField
+import com.example.feriafind_grupo13.ui.components.BotonAuth
+import com.example.feriafind_grupo13.ui.components.CampoDeTextoAuth
+import com.example.feriafind_grupo13.ui.components.CampoDeTextoContrasena
 import com.example.feriafind_grupo13.viewmodel.MainViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -42,7 +42,7 @@ fun LoginScreen(
             Spacer(modifier = Modifier.height(32.dp))
 
             // Campo de texto para el email.
-            AuthTextField(
+            CampoDeTextoAuth(
                 value = email,
                 onValueChange = {
                     email = it
@@ -56,7 +56,7 @@ fun LoginScreen(
             Spacer(modifier = Modifier.height(8.dp))
 
             // Campo de texto para la contraseña.
-            PasswordTextField(
+            CampoDeTextoContrasena(
                 value = password,
                 onValueChange = {
                     password = it
@@ -69,7 +69,7 @@ fun LoginScreen(
             Spacer(modifier = Modifier.height(24.dp))
 
             // Botón para iniciar sesión.
-            AuthButton(
+            BotonAuth(
                 text = "Iniciar Sesión",
                 onClick = {
                     var isValid = true

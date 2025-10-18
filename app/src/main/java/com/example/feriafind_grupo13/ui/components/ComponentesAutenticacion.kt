@@ -9,7 +9,6 @@ import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
@@ -17,10 +16,9 @@ import androidx.compose.ui.unit.dp
 
 /**
  * Un campo de texto reutilizable para los formularios de autenticación.
- * Maneja el estado de error y la lógica visual.
  */
 @Composable
-fun AuthTextField(
+fun CampoDeTextoAuth(
     value: String,
     onValueChange: (String) -> Unit,
     label: String,
@@ -41,14 +39,16 @@ fun AuthTextField(
         Text(
             text = errorMessage,
             color = MaterialTheme.colorScheme.error,
-            style = MaterialTheme.typography.bodySmall,
-            modifier = Modifier.fillMaxWidth()
+            style = MaterialTheme.typography.bodySmall
         )
     }
 }
 
+/**
+ * Un campo de texto específico para contraseñas con un ícono para mostrar/ocultar.
+ */
 @Composable
-fun PasswordTextField(
+fun CampoDeTextoContrasena(
     value: String,
     onValueChange: (String) -> Unit,
     label: String,
@@ -77,8 +77,7 @@ fun PasswordTextField(
         Text(
             text = errorMessage,
             color = MaterialTheme.colorScheme.error,
-            style = MaterialTheme.typography.bodySmall,
-            modifier = Modifier.fillMaxWidth()
+            style = MaterialTheme.typography.bodySmall
         )
     }
 }
@@ -87,7 +86,7 @@ fun PasswordTextField(
  * Un botón reutilizable para las acciones principales en las pantallas de autenticación.
  */
 @Composable
-fun AuthButton(
+fun BotonAuth(
     text: String,
     onClick: () -> Unit
 ) {

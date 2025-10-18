@@ -11,9 +11,9 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
-import com.example.feriafind_grupo13.ui.components.AuthButton
-import com.example.feriafind_grupo13.ui.components.AuthTextField
-import com.example.feriafind_grupo13.ui.components.PasswordTextField
+import com.example.feriafind_grupo13.ui.components.BotonAuth
+import com.example.feriafind_grupo13.ui.components.CampoDeTextoAuth
+import com.example.feriafind_grupo13.ui.components.CampoDeTextoContrasena
 import com.example.feriafind_grupo13.viewmodel.MainViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -60,7 +60,7 @@ fun RegisterScreen(
 
             // PASO 3: Usar tus componentes `AuthTextField` y `PasswordTextField`.
             // Les pasamos tanto el valor como el estado de error.
-            AuthTextField(
+            CampoDeTextoAuth(
                 value = name,
                 onValueChange = {
                     name = it
@@ -72,7 +72,7 @@ fun RegisterScreen(
             )
             Spacer(modifier = Modifier.height(8.dp))
 
-            AuthTextField(
+            CampoDeTextoAuth(
                 value = email,
                 onValueChange = {
                     email = it
@@ -85,7 +85,7 @@ fun RegisterScreen(
             )
             Spacer(modifier = Modifier.height(8.dp))
 
-            PasswordTextField(
+            CampoDeTextoContrasena(
                 value = password,
                 onValueChange = {
                     password = it
@@ -97,7 +97,7 @@ fun RegisterScreen(
             )
             Spacer(modifier = Modifier.height(8.dp))
 
-            PasswordTextField(
+            CampoDeTextoContrasena(
                 value = confirmPassword,
                 onValueChange = {
                     confirmPassword = it
@@ -110,7 +110,7 @@ fun RegisterScreen(
             Spacer(modifier = Modifier.height(24.dp))
 
             // PASO 4: Usar tu componente `AuthButton` y poner la lógica de validación.
-            AuthButton(
+            BotonAuth(
                 text = "Registrarse",
                 onClick = {
                     // Reiniciamos los errores
