@@ -69,7 +69,6 @@ class MainActivity : ComponentActivity() {
                         composable(route = Screen.Register.route) {
                             RegisterScreen(navController = navController, viewModel = viewModel)
                         }
-                        // **CORRECCIÓN AQUÍ**
                         // Se añade el composable para la ruta de Login, que faltaba.
                         composable(route = Screen.Login.route) {
                             LoginScreen(navController = navController, viewModel = viewModel)
