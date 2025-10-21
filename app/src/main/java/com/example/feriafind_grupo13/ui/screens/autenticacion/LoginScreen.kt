@@ -21,18 +21,27 @@ import com.example.feriafind_grupo13.ui.components.AuthCard
 import com.example.feriafind_grupo13.ui.components.BotonAuth
 import com.example.feriafind_grupo13.ui.components.CampoDeTextoAuth
 import com.example.feriafind_grupo13.ui.components.CampoDeTextoContrasena
-import com.example.feriafind_grupo13.viewmodel.MainViewModel
+import com.example.feriafind_grupo13.viewmodel.AuthViewModel
+import com.example.feriafind_grupo13.navigation.NavigationEvent
+import kotlinx.coroutines.flow.collectLatest
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun LoginScreen(
     navController: NavController,
-    viewModel: MainViewModel = viewModel()
+    viewModel: AuthViewModel = viewModel()
 ) {
-    var email by remember { mutableStateOf("") }
-    var password by remember { mutableStateOf("") }
-    var emailError by remember { mutableStateOf<String?>(null) }
-    var passwordError by remember { mutableStateOf<String?>(null) }
+    val uiState by viewModel.uiState.collectAsState()
+
+    LaunchedEffect(key1 = true) {
+        viewModel.navigationEvents.collectLatest { event ->
+            if (event is NavigationEvent.NavigateTo) {
+                navController.navigate(event.route.route) {
+                    event.popUpToRoute?.let { popUpTo(it.route) { inclusive = event.inclusive } }
+                }
+            }
+        }
+    }
 
     Scaffold(
         topBar = {
@@ -65,21 +74,21 @@ fun LoginScreen(
             AuthCard(modifier = Modifier.fillMaxWidth()) {
                 Column(modifier = Modifier.padding(16.dp)) {
                     CampoDeTextoAuth(
-                        value = email,
-                        onValueChange = { email = it; emailError = null },
+                        value = uiState.email,
+                        onValueChange = viewModel::onEmailChange,
                         label = "Correo Electrónico",
-                        isError = emailError != null,
-                        errorMessage = emailError ?: "",
+                        isError = uiState.errorEmail != null,
+                        errorMessage = uiState.errorEmail ?: "",
                         keyboardType = KeyboardType.Email
                     )
                     Spacer(modifier = Modifier.height(16.dp))
 
                     CampoDeTextoContrasena(
-                        value = password,
-                        onValueChange = { password = it; passwordError = null },
+                        value = uiState.contrasena,
+                        onValueChange = viewModel::onContrasenaChange,
                         label = "Contraseña",
-                        isError = passwordError != null,
-                        errorMessage = passwordError ?: ""
+                        isError = uiState.errorContrasena != null,
+                        errorMessage = uiState.errorContrasena ?: ""
                     )
                 }
             }
@@ -89,21 +98,7 @@ fun LoginScreen(
             BotonAuth(
                 text = "Iniciar Sesión",
                 onClick = {
-                    var isValid = true
-                    if (!email.contains("@") || email.isBlank()) {
-                        emailError = "Ingresa un correo válido"
-                        isValid = false
-                    }
-                    if (password.isBlank()) {
-                        passwordError = "La contraseña no puede estar vacía"
-                        isValid = false
-                    }
-                    if (isValid) {
-                        navController.navigate(Screen.Main.route) {
-                            popUpTo(navController.graph.startDestinationId) { inclusive = true }
-                            launchSingleTop = true
-                        }
-                    }
+                    viewModel.iniciarSesion()
                 }
             )
             Spacer(modifier = Modifier.height(12.dp))

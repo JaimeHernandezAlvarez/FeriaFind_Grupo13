@@ -11,13 +11,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.feriafind_grupo13.R
+import com.example.feriafind_grupo13.viewmodel.MapViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun MapScreen() {
-    var dia by remember { mutableStateOf("Domingo") }
-    var rubro by remember { mutableStateOf("Verduras") }
+fun MapScreen(viewModel: MapViewModel = viewModel()) {
+    val uiState by viewModel.uiState.collectAsState()
 
     Scaffold(
         topBar = {
@@ -40,14 +41,14 @@ fun MapScreen() {
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 OutlinedTextField(
-                    value = dia,
-                    onValueChange = { dia = it },
+                    value = uiState.diaSeleccionado,
+                    onValueChange = viewModel::onDiaChange,
                     label = { Text("Día") },
                     modifier = Modifier.weight(1f)
                 )
                 OutlinedTextField(
-                    value = rubro,
-                    onValueChange = { rubro = it },
+                    value = uiState.rubroSeleccionado,
+                    onValueChange = viewModel::onRubroChange,
                     label = { Text("Rubro") },
                     modifier = Modifier.weight(1f)
                 )

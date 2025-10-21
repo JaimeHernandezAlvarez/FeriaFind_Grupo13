@@ -9,20 +9,14 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import com.example.feriafind_grupo13.data.model.Vendedor
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.feriafind_grupo13.ui.components.TarjetaVendedor
+import com.example.feriafind_grupo13.viewmodel.SellersViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun SellerListScreen() {
-    // Datos de ejemplo
-    val vendedores = listOf(
-        Vendedor("101", "user1", "Juan Pérez", "Vendedor desde 2017", "9:00 - 14:00", ""),
-        Vendedor("102", "user2", "Pedro Soto", "Vendedor desde 2020", "12:00 - 15:30", ""),
-        Vendedor("103", "user3", "Luis Rojas", "Vendedor desde 2023", "8:30 - 13:00", "")
-    )
-    var searchQuery by remember { mutableStateOf("") }
-    var favoritos by remember { mutableStateOf(setOf("101")) } // Juan Pérez es favorito
+fun SellerListScreen(viewModel: SellersViewModel = viewModel()) {
+    val uiState by viewModel.uiState.collectAsState()
 
     Scaffold(
         topBar = {
@@ -31,25 +25,19 @@ fun SellerListScreen() {
     ) { innerPadding ->
         Column(modifier = Modifier.padding(innerPadding).padding(16.dp)) {
             OutlinedTextField(
-                value = searchQuery,
-                onValueChange = { searchQuery = it },
+                value = uiState.searchQuery,
+                onValueChange = viewModel::onSearchQueryChange,
                 label = { Text("Buscar Vendedores") },
                 leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
                 modifier = Modifier.fillMaxWidth()
             )
             Spacer(Modifier.height(16.dp))
             LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                items(vendedores) { vendedor ->
+                items(uiState.vendedoresMostrados) { vendedor ->
                     TarjetaVendedor(
                         vendedor = vendedor,
-                        esFavorito = vendedor.id in favoritos,
-                        onFavoritoClick = {
-                            favoritos = if (vendedor.id in favoritos) {
-                                favoritos - vendedor.id
-                            } else {
-                                favoritos + vendedor.id
-                            }
-                        }
+                        esFavorito = vendedor.id in uiState.favoritos,
+                        onFavoritoClick = { viewModel.onFavoritoClick(vendedor.id) }
                     )
                 }
             }

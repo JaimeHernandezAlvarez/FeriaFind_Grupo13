@@ -13,15 +13,14 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.feriafind_grupo13.R
+import com.example.feriafind_grupo13.viewmodel.ProfileViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ProfileScreen() {
-    var nombre by remember { mutableStateOf("Juan Perez") }
-    var descripcion by remember { mutableStateOf("Vendedor desde 2017") }
-    var correo by remember { mutableStateOf("juanito.15@gmail.com") }
-    var horario by remember { mutableStateOf("9:00 - 14:00") }
+fun ProfileScreen(viewModel: ProfileViewModel = viewModel()) {
+    val uiState by viewModel.uiState.collectAsState()
 
     Scaffold(
         topBar = { TopAppBar(title = { Text("Mi Perfil") }) }
@@ -52,27 +51,27 @@ fun ProfileScreen() {
             }
 
             OutlinedTextField(
-                value = nombre,
-                onValueChange = { nombre = it },
+                value = uiState.nombre,
+                onValueChange = viewModel::onNombreChange,
                 label = { Text("Nombre") },
                 modifier = Modifier.fillMaxWidth()
             )
             OutlinedTextField(
-                value = descripcion,
-                onValueChange = { descripcion = it },
+                value = uiState.descripcion,
+                onValueChange = viewModel::onDescripcionChange,
                 label = { Text("Descripción") },
                 modifier = Modifier.fillMaxWidth()
             )
             OutlinedTextField(
-                value = correo,
-                onValueChange = { correo = it },
+                value = uiState.correo,
+                onValueChange = { /* El correo no se cambia */ },
                 label = { Text("Correo") },
                 modifier = Modifier.fillMaxWidth(),
                 readOnly = true // El correo no se debería poder cambiar
             )
             OutlinedTextField(
-                value = horario,
-                onValueChange = { horario = it },
+                value = uiState.horario,
+                onValueChange = viewModel::onHorarioChange,
                 label = { Text("Horario") },
                 modifier = Modifier.fillMaxWidth()
             )
@@ -80,10 +79,10 @@ fun ProfileScreen() {
             Spacer(Modifier.weight(1f))
 
             Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-                OutlinedButton(onClick = { /* TODO */ }, modifier = Modifier.weight(1f)) {
+                OutlinedButton(onClick = viewModel::restaurarValores, modifier = Modifier.weight(1f)) {
                     Text("Restaurar")
                 }
-                Button(onClick = { /* TODO */ }, modifier = Modifier.weight(1f)) {
+                Button(onClick = viewModel::guardarCambios, modifier = Modifier.weight(1f)) {
                     Text("Guardar")
                 }
             }
