@@ -2,6 +2,7 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
+    id("com.google.devtools.ksp") version "2.0.21-1.0.25"
 }
 
 android {
@@ -70,4 +71,36 @@ dependencies {
     debugImplementation(libs.androidx.ui.tooling)
     debugImplementation(libs.androidx.ui.test.manifest)
     implementation(libs.androidx.compose.material3.window.size.class1)
+
+    implementation(libs.androidx.core.ktx)
+    implementation(libs.androidx.lifecycle.runtime.ktx)
+    implementation(libs.androidx.activity.compose)
+    implementation(platform(libs.androidx.compose.bom))
+    implementation(libs.androidx.ui.graphics)
+    implementation(libs.androidx.ui.tooling.preview)
+    testImplementation(libs.junit)
+    androidTestImplementation(libs.androidx.junit)
+    androidTestImplementation(libs.androidx.espresso.core)
+    androidTestImplementation(platform(libs.androidx.compose.bom))
+
+    //librerias nuevas
+    implementation("androidx.navigation:navigation-compose:2.9.5")
+    implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.9.4")
+    implementation("androidx.lifecycle:lifecycle-runtime-compose:2.9.4")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.10.2")
+    // Material icons (necesarios para Visibility / VisibilityOff)
+    implementation("androidx.compose.material:material-icons-extended")
+
+    // Room (SQLite) - runtime y extensiones KTX
+    implementation("androidx.room:room-runtime:2.6.1")    // <-- NUEVO
+    implementation("androidx.room:room-ktx:2.6.1")        // <-- NUEVO
+
+    // Compilador de Room vía KSP
+    ksp("androidx.room:room-compiler:2.6.1")               // <-- NUEVO
+
+    //manipular la carga de imagenes en el cache temporal
+    implementation("io.coil-kt:coil-compose:2.7.0")
+
+    //Data Store
+    implementation("androidx.datastore:datastore-preferences:1.1.1")
 }
