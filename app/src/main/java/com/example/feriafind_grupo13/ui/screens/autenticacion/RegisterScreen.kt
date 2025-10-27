@@ -13,7 +13,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.example.feriafind_grupo13.R
 import com.example.feriafind_grupo13.navigation.Screen
@@ -29,7 +28,7 @@ import kotlinx.coroutines.flow.collectLatest
 @Composable
 fun RegisterScreen(
     navController: NavController,
-    viewModel: AuthViewModel = viewModel()
+    viewModel: AuthViewModel
 ) {
     val uiState by viewModel.uiState.collectAsState()
 

@@ -2,11 +2,13 @@ package com.example.feriafind_grupo13.viewmodel
 
 import android.util.Patterns
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope // Importar viewModelScope
 import com.example.feriafind_grupo13.data.model.AuthUiState
+import com.example.feriafind_grupo13.data.repository.UserRepository
 import com.example.feriafind_grupo13.navigation.NavigationEvent
 import com.example.feriafind_grupo13.navigation.Screen
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
+// kotlinx.coroutines.CoroutineScope // Ya no es necesario
+import kotlinx.coroutines.Dispatchers // Ya no es necesario
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asSharedFlow
@@ -14,7 +16,9 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
-class AuthViewModel : ViewModel() {
+class AuthViewModel(
+    private val repository: UserRepository
+) : ViewModel() {
 
     // StateFlow para mantener el estado de la UI
     private val _uiState = MutableStateFlow(AuthUiState())
@@ -26,24 +30,25 @@ class AuthViewModel : ViewModel() {
 
 
     // --- Funciones para manejar cambios en los campos de texto ---
+    // (Estas funciones no cambian)
 
     fun onNombreChange(nombre: String) {
-        _uiState.update { it.copy(nombre = nombre, errorNombre = null) }
+        _uiState.update { it.copy(nombre = nombre, errorNombre = null, generalError = null) }
     }
 
     fun onEmailChange(email: String) {
-        _uiState.update { it.copy(email = email, errorEmail = null) }
+        _uiState.update { it.copy(email = email, errorEmail = null, generalError = null) }
     }
 
     fun onContrasenaChange(contrasena: String) {
-        _uiState.update { it.copy(contrasena = contrasena, errorContrasena = null) }
+        _uiState.update { it.copy(contrasena = contrasena, errorContrasena = null, generalError = null) }
     }
 
     fun onConfirmarContrasenaChange(confirmarContrasena: String) {
-        _uiState.update { it.copy(confirmarContrasena = confirmarContrasena, errorConfirmarContrasena = null) }
+        _uiState.update { it.copy(confirmarContrasena = confirmarContrasena, errorConfirmarContrasena = null, generalError = null) }
     }
 
-    // --- Funciones de validación y acciones ---
+    // --- Funciones de validación y acciones (ACTUALIZADAS) ---
 
     fun iniciarSesion() {
         val emailError = validateEmail()
@@ -52,18 +57,41 @@ class AuthViewModel : ViewModel() {
         _uiState.update {
             it.copy(
                 errorEmail = emailError,
-                errorContrasena = contrasenaError
+                errorContrasena = contrasenaError,
+                generalError = null // Limpiar errores generales previos
             )
         }
 
         val isValid = emailError == null && contrasenaError == null
         if (isValid) {
-            CoroutineScope(Dispatchers.Main).launch {
-                _navigationEvents.emit(NavigationEvent.NavigateTo(
-                    route = Screen.Main,
-                    popUpToRoute = Screen.Home,
-                    inclusive = true
-                ))
+            // Usar viewModelScope para lanzar la corutina
+            viewModelScope.launch {
+                // 1. Mostrar estado de carga
+                _uiState.update { it.copy(isLoading = true) }
+
+                // 2. Llamar al repositorio
+                val result = repository.loginUser(
+                    email = _uiState.value.email,
+                    contrasena = _uiState.value.contrasena
+                )
+
+                // 3. Ocultar estado de carga
+                _uiState.update { it.copy(isLoading = false) }
+
+                // 4. Manejar el resultado
+                result.onSuccess { userEntity ->
+                    // ¡Éxito! 'userEntity' contiene los datos del usuario logueado
+                    _navigationEvents.emit(NavigationEvent.NavigateTo(
+                        route = Screen.Main,
+                        popUpToRoute = Screen.Home,
+                        inclusive = true
+                    ))
+                }.onFailure { exception ->
+                    // Fallo. Mostrar error en la UI
+                    _uiState.update {
+                        it.copy(generalError = exception.message ?: "Error desconocido")
+                    }
+                }
             }
         }
     }
@@ -79,24 +107,48 @@ class AuthViewModel : ViewModel() {
                 errorNombre = nombreError,
                 errorEmail = emailError,
                 errorContrasena = contrasenaError,
-                errorConfirmarContrasena = confirmarContrasenaError
+                errorConfirmarContrasena = confirmarContrasenaError,
+                generalError = null // Limpiar errores generales previos
             )
         }
 
         val isValid = listOfNotNull(nombreError, emailError, contrasenaError, confirmarContrasenaError).isEmpty()
         if (isValid) {
-            println("¡Validación de registro exitosa!")
-            CoroutineScope(Dispatchers.Main).launch {
-                _navigationEvents.emit(NavigationEvent.NavigateTo(
-                    route = Screen.Main,
-                    popUpToRoute = Screen.Home,
-                    inclusive = true
-                ))
+            // Usar viewModelScope
+            viewModelScope.launch {
+                // 1. Mostrar estado de carga
+                _uiState.update { it.copy(isLoading = true) }
+
+                // 2. Llamar al repositorio
+                val result = repository.registerUser(
+                    nombre = _uiState.value.nombre,
+                    email = _uiState.value.email,
+                    contrasena = _uiState.value.contrasena
+                )
+
+                // 3. Ocultar estado de carga
+                _uiState.update { it.copy(isLoading = false) }
+
+                // 4. Manejar el resultado
+                result.onSuccess {
+                    println("¡Registro en DB exitoso!")
+                    _navigationEvents.emit(NavigationEvent.NavigateTo(
+                        route = Screen.Main,
+                        popUpToRoute = Screen.Home,
+                        inclusive = true
+                    ))
+                }.onFailure { exception ->
+                    // Fallo. Mostrar error (ej. "El correo ya está registrado")
+                    _uiState.update {
+                        it.copy(generalError = exception.message ?: "Error al registrar")
+                    }
+                }
             }
         }
     }
 
     // --- Validadores privados y reutilizables ---
+    // (Estas funciones no cambian)
 
     private fun validateName(): String? {
         val nombre = _uiState.value.nombre
@@ -108,7 +160,7 @@ class AuthViewModel : ViewModel() {
         return when {
             email.isBlank() -> "El correo no puede estar vacío"
             !Patterns.EMAIL_ADDRESS.matcher(email).matches() -> "Ingresa un formato de correo válido"
-            !email.endsWith(".com") -> "El correo debe terminar en .com"
+            // !email.endsWith(".com") -> "El correo debe terminar en .com" // (Esta validación es muy restrictiva, considera quitarla)
             else -> null
         }
     }
@@ -136,5 +188,3 @@ class AuthViewModel : ViewModel() {
         return if (contrasena != confirmarContrasena) "Las contraseñas no coinciden" else null
     }
 }
-
-

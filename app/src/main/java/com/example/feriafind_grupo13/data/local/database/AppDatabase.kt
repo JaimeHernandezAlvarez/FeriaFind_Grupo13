@@ -11,66 +11,67 @@ import kotlinx.coroutines.CoroutineScope                        // Para corrutin
 import kotlinx.coroutines.Dispatchers                           // Dispatcher IO
 import kotlinx.coroutines.launch                                // Lanzar corrutina
 
-// @Database registra entidades y versión del esquema.
-// version = 1: como es primera inclusión con teléfono, partimos en 1.
 @Database(
     entities = [UserEntity::class],
     version = 1,
-    exportSchema = true // Mantener true para inspección de esquema (útil en educación)
+    exportSchema = false
 )
 abstract class AppDatabase : RoomDatabase() {
 
-    // Exponemos el DAO de usuarios
     abstract fun userDao(): UserDao
 
     companion object {
         @Volatile
-        private var INSTANCE: AppDatabase? = null              // Instancia singleton
-        private const val DB_NAME = "ui_navegacion.db"         // Nombre del archivo .db
+        private var INSTANCE: AppDatabase? = null
+        private const val DB_NAME = "ui_navegacion.db"
 
-        // Obtiene la instancia única de la base
         fun getInstance(context: Context): AppDatabase {
             return INSTANCE ?: synchronized(this) {
-                // Construimos la DB con callback de precarga
                 val instance = Room.databaseBuilder(
                     context.applicationContext,
                     AppDatabase::class.java,
                     DB_NAME
                 )
-                    // Callback para ejecutar cuando la DB se crea por primera vez
                     .addCallback(object : Callback() {
                         override fun onCreate(db: SupportSQLiteDatabase) {
                             super.onCreate(db)
-                            // Lanzamos una corrutina en IO para insertar datos iniciales
                             CoroutineScope(Dispatchers.IO).launch {
+                                // Usamos getInstance(context).userDao() para asegurar que la
+                                // instancia de la DB esté lista antes de usar el DAO.
                                 val dao = getInstance(context).userDao()
 
-                                // Precarga de usuarios (incluye teléfono)
-                                // Reemplaza aquí por los mismitos datos que usas en Login/Register.
+                                // --- INICIO DE CAMBIOS ---
+
+                                // 1. Añadimos el campo "nombre" a los datos de precarga
                                 val seed = listOf(
                                     UserEntity(
+                                        nombre = "Admin Duoc", // Campo añadido
                                         email = "admin@duoc.cl",
                                         password = "Admin123!"
                                     ),
                                     UserEntity(
+                                        nombre = "Vicente Cruz", // Campo añadido
                                         email = "Vcruz@duoc.cl",
                                         password = "123456"
                                     )
                                 )
 
-                                // Inserta seed sólo si la tabla está vacía
+                                // 2. Usamos el mét-odo count() que acabamos de añadir al DAO
                                 if (dao.count() == 0) {
-                                    seed.forEach { dao.insert(it) }
+                                    seed.forEach {
+                                        // 3. Usamos el nombre de mét-odo correcto: insertUser
+                                        dao.insertUser(it)
+                                    }
                                 }
+                                // --- FIN DE CAMBIOS ---
                             }
                         }
                     })
-                    // En entorno educativo, si cambias versión sin migraciones, destruye y recrea.
                     .fallbackToDestructiveMigration()
                     .build()
 
-                INSTANCE = instance                             // Guarda la instancia
-                instance                                        // Devuelve la instancia
+                INSTANCE = instance
+                instance
             }
         }
     }

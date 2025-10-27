@@ -50,7 +50,7 @@ dependencies {
     implementation("androidx.lifecycle:lifecycle-runtime-compose:2.9.4")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.10.2")
     implementation("androidx.compose.material:material-icons-extended:1.7.8")
-    implementation("io.coil-kt:coil-compose:2.6.0") // Agregado para cargar imágenes fácilmente
+    implementation("io.coil-kt:coil-compose:2.6.1") // Agregado para cargar imágenes fácilmente
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.activity.compose)

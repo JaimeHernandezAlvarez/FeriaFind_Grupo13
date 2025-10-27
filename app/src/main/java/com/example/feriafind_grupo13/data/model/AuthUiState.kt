@@ -9,9 +9,13 @@ data class AuthUiState(
     val email: String = "",
     val contrasena: String = "",
     val confirmarContrasena: String = "",
-    // Estados de error para cada campo
+
     val errorNombre: String? = null,
     val errorEmail: String? = null,
     val errorContrasena: String? = null,
-    val errorConfirmarContrasena: String? = null
+    val errorConfirmarContrasena: String? = null,
+
+    // --- CAMPOS AÑADIDOS ---
+    val isLoading: Boolean = false,     // Para mostrar un ProgressBar
+    val generalError: String? = null    // Para errores de API o DB (ej. "Credenciales incorrectas")
 )
