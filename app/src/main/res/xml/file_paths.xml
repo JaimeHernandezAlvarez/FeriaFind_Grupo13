@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <paths xmlns:android="http://schemas.android.com/apk/res/android">
-    <external-files-path
+    <!-- Cambiado de external-files-path a cache-path -->
+    <cache-path
         name="my_images"
-        path="Pictures" />
+        path="." /> <!-- path="." significa la raíz del directorio cache -->
 </paths>
