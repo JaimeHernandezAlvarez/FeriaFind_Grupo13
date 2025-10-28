@@ -127,7 +127,7 @@ class MainActivity : ComponentActivity() {
                             LoginScreen(navController = navController, viewModel = authViewModel)
                         }
                         composable(route = Screen.Main.route) {
-                            MainScreen()
+                            MainScreen(repository = repository)
                         }
                     }
                 }

@@ -13,7 +13,7 @@ import kotlinx.coroutines.launch                                // Lanzar corrut
 
 @Database(
     entities = [UserEntity::class],
-    version = 1,
+    version = 2,
     exportSchema = false
 )
 abstract class AppDatabase : RoomDatabase() {
@@ -47,12 +47,18 @@ abstract class AppDatabase : RoomDatabase() {
                                     UserEntity(
                                         nombre = "Admin Duoc", // Campo añadido
                                         email = "admin@duoc.cl",
-                                        password = "Admin123!"
+                                        password = "Admin123!",
+                                        descripcion = "Admin",
+                                        horario = "N/A",
+                                        fotoUri = null
                                     ),
                                     UserEntity(
                                         nombre = "Vicente Cruz", // Campo añadido
                                         email = "Vcruz@duoc.cl",
-                                        password = "123456"
+                                        password = "12345678",
+                                        descripcion = "El vicente mas de prueba que nunca",
+                                        horario = "N/A",
+                                        fotoUri = null
                                     )
                                 )
 

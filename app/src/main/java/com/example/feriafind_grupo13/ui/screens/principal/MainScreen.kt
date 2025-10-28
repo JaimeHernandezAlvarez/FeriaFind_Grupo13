@@ -14,13 +14,19 @@ import kotlinx.coroutines.launch
 import com.example.feriafind_grupo13.navigation.MainScreen as MainScreenRoute
 import androidx.compose.foundation.layout.padding
 import androidx.compose.ui.Modifier
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
-
+// --- IMPORTAR DEPENDENCIAS ---
+import com.example.feriafind_grupo13.data.repository.UserRepository
+import com.example.feriafind_grupo13.viewmodel.ProfileViewModel
+import com.example.feriafind_grupo13.viewmodel.ProfileViewModelFactory
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun MainScreen() {
+fun MainScreen(
+    repository: UserRepository // <-- 1. ACEPTA EL REPOSITORIO
+) {
     val navController = rememberNavController()
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
     val scope = rememberCoroutineScope()
@@ -37,6 +43,11 @@ fun MainScreen() {
     )
     val currentScreen = menuItems.find { it.route == currentRoute } ?: MainScreenRoute.Map
 
+    // --- 2. CREAR LA FACTORY Y EL VIEWMODEL ---
+    // (Esto asegura que el viewModel sobreviva mientras estés en MainScreen)
+    val profileFactory = ProfileViewModelFactory(repository)
+    val profileViewModel: ProfileViewModel = viewModel(factory = profileFactory)
+    // --- FIN DE LA MODIFICACIÓN ---
 
     ModalNavigationDrawer(
         drawerState = drawerState,
@@ -64,11 +75,18 @@ fun MainScreen() {
                 startDestination = MainScreenRoute.Map.route,
                 Modifier.padding(innerPadding)
             ) {
+
                 composable(MainScreenRoute.Map.route) { MapScreen() }
                 composable(MainScreenRoute.Products.route) { ProductListScreen() }
                 composable(MainScreenRoute.Sellers.route) { SellerListScreen() }
                 composable(MainScreenRoute.Favorites.route) { FavoritesScreen() }
-                composable(MainScreenRoute.Profile.route) { ProfileScreen() }
+
+                // 3. PASAR EL VIEWMODEL A LA PANTALLA DE PERFIL
+                composable(MainScreenRoute.Profile.route) {
+                    ProfileScreen(
+                        viewModel = profileViewModel
+                    )
+                }
             }
         }
     }

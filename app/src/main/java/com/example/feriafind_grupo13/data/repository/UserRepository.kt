@@ -4,6 +4,7 @@ import com.example.feriafind_grupo13.data.local.storage.UserPreferences // <-- I
 import com.example.feriafind_grupo13.data.local.user.UserDao
 import com.example.feriafind_grupo13.data.local.user.UserEntity
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.withContext
 
 /**
@@ -31,6 +32,7 @@ class UserRepository(
                     // --- CAMBIO AÑADIDO ---
                     // Al registrar exitosamente, guardamos el estado de login
                     userPreferences.setLoggedIn(true)
+                    userPreferences.saveUserEmail(email)
                     // --- FIN DE CAMBIO ---
 
                     Result.success(Unit)
@@ -50,6 +52,7 @@ class UserRepository(
                     // --- CAMBIO AÑADIDO ---
                     // Al logear exitosamente, guardamos el estado de login
                     userPreferences.setLoggedIn(true)
+                    userPreferences.saveUserEmail(user.email)
                     // --- FIN DE CAMBIO ---
 
                     Result.success(user)
@@ -61,4 +64,42 @@ class UserRepository(
             }
         }
     }
+    // --- NUEVOS MÉTODOS PARA EL PERFIL ---
+
+    /**
+     * Obtiene el email del usuario logueado desde DataStore.
+     */
+    fun getLoggedInUserEmail(): Flow<String?> {
+        return userPreferences.getEmail
+    }
+
+    /**
+     * Obtiene los datos del perfil de un usuario por su email desde Room.
+     */
+    suspend fun getUserProfile(email: String): Result<UserEntity> {
+        return withContext(Dispatchers.IO) {
+            try {
+                val user = userDao.findUserByEmail(email)
+                if (user != null) Result.success(user)
+                else Result.failure(Exception("Usuario no encontrado"))
+            } catch (e: Exception) {
+                Result.failure(e)
+            }
+        }
+    }
+
+    /**
+     * Actualiza un usuario en la base de datos Room.
+     */
+    suspend fun updateUserProfile(user: UserEntity): Result<Unit> {
+        return withContext(Dispatchers.IO) {
+            try {
+                userDao.updateUser(user)
+                Result.success(Unit)
+            } catch (e: Exception) {
+                Result.failure(e)
+            }
+        }
+    }
+
 }
