@@ -16,6 +16,12 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import androidx.compose.animation.AnimatedContentTransitionScope
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
 // --- 2. IMPORTAR TODAS LAS DEPENDENCIAS ---
 import com.example.feriafind_grupo13.data.local.database.AppDatabase
 import com.example.feriafind_grupo13.data.local.storage.UserPreferences
@@ -124,23 +130,136 @@ class MainActivity : ComponentActivity() {
                             startDestination = Screen.Home.route,
                             modifier = Modifier.padding(innerPadding)
                         ) {
-                            composable(route = Screen.Home.route) {
+                            // Duración de la animación
+                            val animDuration = 400
+                            // Desplazamiento
+                            val slideOffset = 1000
+
+                            composable(
+                                route = Screen.Home.route,
+                                // (Opcional) Animación para salir de Home
+                                exitTransition = {
+                                    slideOutHorizontally(
+                                        targetOffsetX = { -slideOffset },
+                                        animationSpec = tween(animDuration)
+                                    ) + fadeOut(animationSpec = tween(animDuration))
+                                },
+                                // (Opcional) Animación para volver a Home
+                                popEnterTransition = {
+                                    slideInHorizontally(
+                                        initialOffsetX = { -slideOffset },
+                                        animationSpec = tween(animDuration)
+                                    ) + fadeIn(animationSpec = tween(animDuration))
+                                }
+                            ) {
                                 HomeScreenCompacta(navController, mainViewModel)
+
                             }
                             // Estas llamadas ya estaban correctas, pasando el viewModel
-                            composable(route = Screen.Register.route) {
+                            composable(
+                                route = Screen.Register.route,
+                                // Entrar a Register
+                                enterTransition = {
+                                    slideInHorizontally(
+                                        initialOffsetX = { slideOffset },
+                                        animationSpec = tween(animDuration)
+                                    ) + fadeIn(animationSpec = tween(animDuration))
+                                },
+                                // Salir de Register (hacia Main)
+                                exitTransition = {
+                                    slideOutHorizontally(
+                                        targetOffsetX = { -slideOffset },
+                                        animationSpec = tween(animDuration)
+                                    ) + fadeOut(animationSpec = tween(animDuration))
+                                },
+                                // Volver a Register (desde Main, no debería pasar)
+                                popEnterTransition = {
+                                    slideInHorizontally(
+                                        initialOffsetX = { -slideOffset },
+                                        animationSpec = tween(animDuration)
+                                    ) + fadeIn(animationSpec = tween(animDuration))
+                                },
+                                // Ir "atrás" de Register (hacia Home)
+                                popExitTransition = {
+                                    slideOutHorizontally(
+                                        targetOffsetX = { slideOffset },
+                                        animationSpec = tween(animDuration)
+                                    ) + fadeOut(animationSpec = tween(animDuration))
+                                }
+                            ) {
                                 RegisterScreen(
                                     navController = navController,
                                     viewModel = authViewModel
                                 )
+
                             }
-                            composable(route = Screen.Login.route) {
+                            composable(
+                                route = Screen.Login.route,
+                                // Entrar a Login
+                                enterTransition = {
+                                    slideInHorizontally(
+                                        initialOffsetX = { slideOffset },
+                                        animationSpec = tween(animDuration)
+                                    ) + fadeIn(animationSpec = tween(animDuration))
+                                },
+                                // Salir de Login (hacia Main)
+                                exitTransition = {
+                                    slideOutHorizontally(
+                                        targetOffsetX = { -slideOffset },
+                                        animationSpec = tween(animDuration)
+                                    ) + fadeOut(animationSpec = tween(animDuration))
+                                },
+                                // Volver a Login (desde Main, no debería pasar)
+                                popEnterTransition = {
+                                    slideInHorizontally(
+                                        initialOffsetX = { -slideOffset },
+                                        animationSpec = tween(animDuration)
+                                    ) + fadeIn(animationSpec = tween(animDuration))
+                                },
+                                // Ir "atrás" de Login (hacia Home)
+                                popExitTransition = {
+                                    slideOutHorizontally(
+                                        targetOffsetX = { slideOffset },
+                                        animationSpec = tween(animDuration)
+                                    ) + fadeOut(animationSpec = tween(animDuration))
+                                }
+                            ) {
                                 LoginScreen(
                                     navController = navController,
                                     viewModel = authViewModel
                                 )
                             }
-                            composable(route = Screen.Main.route) {
+                            composable(
+                                route = Screen.Main.route,
+                                // Entrar a Main (desde Login/Register)
+                                enterTransition = {
+                                    slideInHorizontally(
+                                        initialOffsetX = { slideOffset },
+                                        animationSpec = tween(animDuration)
+                                    ) + fadeIn(animationSpec = tween(animDuration))
+                                },
+                                // Salir de Main (al cerrar sesión)
+                                exitTransition = {
+                                    slideOutHorizontally(
+                                        targetOffsetX = { -slideOffset },
+                                        animationSpec = tween(animDuration)
+                                    ) + fadeOut(animationSpec = tween(animDuration))
+                                },
+                                // (Estos dos no se usarán si cierras sesión con popUpTo(0),
+                                // pero es bueno tenerlos por si acaso)
+                                popEnterTransition = {
+                                    slideInHorizontally(
+                                        initialOffsetX = { -slideOffset },
+                                        animationSpec = tween(animDuration)
+                                    ) + fadeIn(animationSpec = tween(animDuration))
+                                },
+                                popExitTransition = {
+                                    slideOutHorizontally(
+                                        targetOffsetX = { slideOffset },
+                                        animationSpec = tween(animDuration)
+                                    ) + fadeOut(animationSpec = tween(animDuration))
+                                }
+                            ) {
                                 MainScreen(repository = repository)
                             }
                         }

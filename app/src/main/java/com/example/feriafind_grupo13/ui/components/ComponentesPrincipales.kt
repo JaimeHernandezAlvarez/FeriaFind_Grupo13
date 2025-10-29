@@ -22,9 +22,11 @@ import androidx.compose.material3.NavigationDrawerItem
 import androidx.compose.material3.NavigationDrawerItemDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
+import androidx.navigation.compose.currentBackStackEntryAsState
 import com.example.feriafind_grupo13.navigation.MainScreen
 import com.example.feriafind_grupo13.navigation.Screen
 
@@ -40,6 +42,11 @@ fun AppDrawer(
         MainScreen.Favorites,
         MainScreen.Profile
     )
+
+    // 1. Obtenemos el estado actual de la pila de navegación
+    val navBackStackEntry by navController.currentBackStackEntryAsState()
+    // 2. Obtenemos la ruta actual (ej: "profile")
+    val currentRoute = navBackStackEntry?.destination?.route
 
     ModalDrawerSheet(drawerContainerColor = MaterialTheme.colorScheme.primary) {
         Spacer(Modifier.height(12.dp))
@@ -62,7 +69,7 @@ fun AppDrawer(
                     }
                 },
                 label = { Text(screen.title) },
-                selected = false, // Puedes implementar la lógica para el item seleccionado si lo deseas
+                selected = (currentRoute == screen.route),
                 onClick = {
                     navController.navigate(screen.route)
                     closeDrawer()
