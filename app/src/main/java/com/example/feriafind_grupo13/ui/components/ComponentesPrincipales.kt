@@ -16,8 +16,10 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Divider
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalDrawerSheet
 import androidx.compose.material3.NavigationDrawerItem
+import androidx.compose.material3.NavigationDrawerItemDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -39,8 +41,15 @@ fun AppDrawer(
         MainScreen.Profile
     )
 
-    ModalDrawerSheet {
+    ModalDrawerSheet(drawerContainerColor = MaterialTheme.colorScheme.primary) {
         Spacer(Modifier.height(12.dp))
+
+        // Colores para los items (blanco)
+        val itemColors = NavigationDrawerItemDefaults.colors(
+            unselectedIconColor = MaterialTheme.colorScheme.onPrimary,
+            unselectedTextColor = MaterialTheme.colorScheme.onPrimary
+        )
+
         items.forEach { screen ->
             NavigationDrawerItem(
                 icon = {
@@ -58,7 +67,8 @@ fun AppDrawer(
                     navController.navigate(screen.route)
                     closeDrawer()
                 },
-                modifier = Modifier.padding(horizontal = 12.dp)
+                modifier = Modifier.padding(horizontal = 12.dp) ,
+                colors = itemColors
             )
         }
         Divider(modifier = Modifier.padding(vertical = 12.dp))
@@ -75,8 +85,10 @@ fun AppDrawer(
                 }
                 closeDrawer()
             },
-            modifier = Modifier.padding(horizontal = 12.dp)
+            modifier = Modifier.padding(horizontal = 12.dp),
+            colors = itemColors
         )
+
     }
 }
 

@@ -10,26 +10,32 @@ import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.platform.LocalContext
 
+// Paleta para el Tema Oscuro
 private val DarkColorScheme = darkColorScheme(
-    primary = Feria, // podemos agregar nuestros colores a la app y luego importarlos
-    secondary = PurpleGrey80,
-    tertiary = Pink80
+    primary = VerdePrincipalOscuro,
+    secondary = VerdeSecundarioOscuro,
+    tertiary = NaranjaTerciarioOscuro,
+    background = FondoOscuro,
+    surface = SuperficieOscuro,
+    onPrimary = TextoSobrePrincipalOscuro,
+    onSecondary = TextoSobrePrincipalOscuro, // Reusamos el mismo para el secundario
+    onTertiary = TextoSobreTerciarioOscuro,
+    onBackground = TextoSobreFondoOscuro,
+    onSurface = TextoSobreFondoOscuro
 )
 
+// Paleta para el Tema Claro
 private val LightColorScheme = lightColorScheme(
-    primary = Feria,
-    secondary = PurpleGrey40,
-    tertiary = Pink40
-
-    /* Other default colors to override
-    background = Color(0xFFFFFBFE),
-    surface = Color(0xFFFFFBFE),
-    onPrimary = Color.White,
-    onSecondary = Color.White,
-    onTertiary = Color.White,
-    onBackground = Color(0xFF1C1B1F),
-    onSurface = Color(0xFF1C1B1F),
-    */
+    primary = VerdePrincipal,
+    secondary = VerdeSecundario,
+    tertiary = NaranjaTerciario,
+    background = FondoClaro,
+    surface = SuperficieClaro,
+    onPrimary = TextoSobrePrincipal,
+    onSecondary = TextoSobrePrincipal, // Reusamos el texto blanco
+    onTertiary = TextoSobrePrincipal, // Reusamos el texto blanco
+    onBackground = TextoSobreFondoClaro,
+    onSurface = TextoSobreFondoClaro
 )
 
 @Composable

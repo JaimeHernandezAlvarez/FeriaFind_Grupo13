@@ -6,7 +6,9 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext // <-- 1. IMPORTAR CONTEXT
@@ -35,99 +37,112 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
-            FeriaFind_Grupo13Theme {
-                val mainViewModel: MainViewModel = viewModel()
+            FeriaFind_Grupo13Theme(dynamicColor = false) {
+                Surface(
+                    modifier = Modifier.fillMaxSize(),
+                    color = MaterialTheme.colorScheme.background
+                ) {
+                    val mainViewModel: MainViewModel = viewModel()
 
-                // --- INICIO DE LA MODIFICACIÓN ---
+                    // --- INICIO DE LA MODIFICACIÓN ---
 
-                // 4. Obtener el contexto de la aplicación
-                val context = LocalContext.current.applicationContext
+                    // 4. Obtener el contexto de la aplicación
+                    val context = LocalContext.current.applicationContext
 
-                // 5. Crear las dependencias (DB, DAO, Prefs, Repo)
-                val db = AppDatabase.getInstance(context)
-                val userDao = db.userDao()
-                val userPrefs = UserPreferences(context)
-                val repository = UserRepository(userDao, userPrefs)
+                    // 5. Crear las dependencias (DB, DAO, Prefs, Repo)
+                    val db = AppDatabase.getInstance(context)
+                    val userDao = db.userDao()
+                    val userPrefs = UserPreferences(context)
+                    val repository = UserRepository(userDao, userPrefs)
 
-                // 6. Crear la Fábrica
-                val authFactory = AuthViewModelFactory(repository)
+                    // 6. Crear la Fábrica
+                    val authFactory = AuthViewModelFactory(repository)
 
-                // 7. Crear el AuthViewModel USANDO la fábrica
-                val authViewModel: AuthViewModel = viewModel(factory = authFactory)
+                    // 7. Crear el AuthViewModel USANDO la fábrica
+                    val authViewModel: AuthViewModel = viewModel(factory = authFactory)
 
-                // --- FIN DE LA MODIFICACIÓN ---
+                    // --- FIN DE LA MODIFICACIÓN ---
 
-                val navController = rememberNavController()
+                    val navController = rememberNavController()
 
-                // Escuchar eventos de navegación del MainViewModel...
-                // (Este código se queda igual)
-                LaunchedEffect(key1 = Unit) {
-                    mainViewModel.navigationEvents.collectLatest { event ->
-                        when (event) {
-                            is NavigationEvent.NavigateTo -> {
-                                navController.navigate(route = event.route.route) {
-                                    event.popUpToRoute?.let {
-                                        popUpTo(route = it.route) {
-                                            inclusive = event.inclusive
+                    // Escuchar eventos de navegación del MainViewModel...
+                    // (Este código se queda igual)
+                    LaunchedEffect(key1 = Unit) {
+                        mainViewModel.navigationEvents.collectLatest { event ->
+                            when (event) {
+                                is NavigationEvent.NavigateTo -> {
+                                    navController.navigate(route = event.route.route) {
+                                        event.popUpToRoute?.let {
+                                            popUpTo(route = it.route) {
+                                                inclusive = event.inclusive
+                                            }
                                         }
+                                        launchSingleTop = event.singleTop
+                                        restoreState = true
                                     }
-                                    launchSingleTop = event.singleTop
-                                    restoreState = true
                                 }
+
+                                is NavigationEvent.PopBackStack -> navController.popBackStack()
+                                is NavigationEvent.NavigateUp -> navController.navigateUp()
                             }
-                            is NavigationEvent.PopBackStack -> navController.popBackStack()
-                            is NavigationEvent.NavigateUp -> navController.navigateUp()
                         }
                     }
-                }
 
-                // Escuchar eventos de navegación del AuthViewModel...
-                // (Este código se queda igual)
-                // NOTA: Este bloque ahora funciona como querías,
-                // pero ya no es estrictamente necesario si tus pantallas
-                // (Login/Register) manejan su propia navegación como
-                // lo hacían en tu código original.
-                // Puedes dejarlo o quitarlo, pero no causará error.
-                LaunchedEffect(key1 = Unit) {
-                    authViewModel.navigationEvents.collectLatest { event ->
-                        when (event) {
-                            is NavigationEvent.NavigateTo -> {
-                                navController.navigate(route = event.route.route) {
-                                    event.popUpToRoute?.let {
-                                        popUpTo(route = it.route) {
-                                            inclusive = event.inclusive
+                    // Escuchar eventos de navegación del AuthViewModel...
+                    // (Este código se queda igual)
+                    // NOTA: Este bloque ahora funciona como querías,
+                    // pero ya no es estrictamente necesario si tus pantallas
+                    // (Login/Register) manejan su propia navegación como
+                    // lo hacían en tu código original.
+                    // Puedes dejarlo o quitarlo, pero no causará error.
+                    LaunchedEffect(key1 = Unit) {
+                        authViewModel.navigationEvents.collectLatest { event ->
+                            when (event) {
+                                is NavigationEvent.NavigateTo -> {
+                                    navController.navigate(route = event.route.route) {
+                                        event.popUpToRoute?.let {
+                                            popUpTo(route = it.route) {
+                                                inclusive = event.inclusive
+                                            }
                                         }
+                                        launchSingleTop = event.singleTop
                                     }
-                                    launchSingleTop = event.singleTop
                                 }
+
+                                is NavigationEvent.PopBackStack -> navController.popBackStack()
+                                is NavigationEvent.NavigateUp -> navController.navigateUp()
                             }
-                            is NavigationEvent.PopBackStack -> navController.popBackStack()
-                            is NavigationEvent.NavigateUp -> navController.navigateUp()
                         }
                     }
-                }
 
-                // Layout base con NavHost
-                Scaffold(
-                    modifier = Modifier.fillMaxSize()
-                ) { innerPadding ->
-                    NavHost(
-                        navController = navController,
-                        startDestination = Screen.Home.route,
-                        modifier = Modifier.padding(innerPadding)
-                    ) {
-                        composable(route = Screen.Home.route) {
-                            HomeScreenCompacta(navController, mainViewModel)
-                        }
-                        // Estas llamadas ya estaban correctas, pasando el viewModel
-                        composable(route = Screen.Register.route) {
-                            RegisterScreen(navController = navController, viewModel = authViewModel)
-                        }
-                        composable(route = Screen.Login.route) {
-                            LoginScreen(navController = navController, viewModel = authViewModel)
-                        }
-                        composable(route = Screen.Main.route) {
-                            MainScreen(repository = repository)
+                    // Layout base con NavHost
+                    Scaffold(
+                        modifier = Modifier.fillMaxSize()
+                    ) { innerPadding ->
+                        NavHost(
+                            navController = navController,
+                            startDestination = Screen.Home.route,
+                            modifier = Modifier.padding(innerPadding)
+                        ) {
+                            composable(route = Screen.Home.route) {
+                                HomeScreenCompacta(navController, mainViewModel)
+                            }
+                            // Estas llamadas ya estaban correctas, pasando el viewModel
+                            composable(route = Screen.Register.route) {
+                                RegisterScreen(
+                                    navController = navController,
+                                    viewModel = authViewModel
+                                )
+                            }
+                            composable(route = Screen.Login.route) {
+                                LoginScreen(
+                                    navController = navController,
+                                    viewModel = authViewModel
+                                )
+                            }
+                            composable(route = Screen.Main.route) {
+                                MainScreen(repository = repository)
+                            }
                         }
                     }
                 }
