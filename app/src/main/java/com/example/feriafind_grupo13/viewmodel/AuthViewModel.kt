@@ -1,14 +1,11 @@
 package com.example.feriafind_grupo13.viewmodel
 
-import android.util.Patterns
 import androidx.lifecycle.ViewModel
-import androidx.lifecycle.viewModelScope // Importar viewModelScope
+import androidx.lifecycle.viewModelScope
 import com.example.feriafind_grupo13.data.model.AuthUiState
 import com.example.feriafind_grupo13.data.repository.UserRepository
 import com.example.feriafind_grupo13.navigation.NavigationEvent
 import com.example.feriafind_grupo13.navigation.Screen
-// kotlinx.coroutines.CoroutineScope // Ya no es necesario
-import kotlinx.coroutines.Dispatchers // Ya no es necesario
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asSharedFlow
@@ -20,17 +17,16 @@ class AuthViewModel(
     private val repository: UserRepository
 ) : ViewModel() {
 
-    // StateFlow para mantener el estado de la UI
+    // Expresión regular simple para validar emails en cualquier entorno (Android o Tests)
+    private val emailRegex = "^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+\$".toRegex()
+
     private val _uiState = MutableStateFlow(AuthUiState())
     val uiState = _uiState.asStateFlow()
 
-    // SharedFlow para manejar eventos de navegación únicos
     private val _navigationEvents = MutableSharedFlow<NavigationEvent>()
     val navigationEvents = _navigationEvents.asSharedFlow()
 
-
-    // --- Funciones para manejar cambios en los campos de texto ---
-    // (Estas funciones no cambian)
+    // --- Funciones para cambios de texto (Igual que antes) ---
 
     fun onNombreChange(nombre: String) {
         _uiState.update { it.copy(nombre = nombre, errorNombre = null, generalError = null) }
@@ -48,7 +44,7 @@ class AuthViewModel(
         _uiState.update { it.copy(confirmarContrasena = confirmarContrasena, errorConfirmarContrasena = null, generalError = null) }
     }
 
-    // --- Funciones de validación y acciones (ACTUALIZADAS) ---
+    // --- Acciones ---
 
     fun iniciarSesion() {
         val emailError = validateEmail()
@@ -58,36 +54,29 @@ class AuthViewModel(
             it.copy(
                 errorEmail = emailError,
                 errorContrasena = contrasenaError,
-                generalError = null // Limpiar errores generales previos
+                generalError = null
             )
         }
 
         val isValid = emailError == null && contrasenaError == null
         if (isValid) {
-            // Usar viewModelScope para lanzar la corutina
             viewModelScope.launch {
-                // 1. Mostrar estado de carga
                 _uiState.update { it.copy(isLoading = true) }
 
-                // 2. Llamar al repositorio
                 val result = repository.loginUser(
                     email = _uiState.value.email,
                     contrasena = _uiState.value.contrasena
                 )
 
-                // 3. Ocultar estado de carga
                 _uiState.update { it.copy(isLoading = false) }
 
-                // 4. Manejar el resultado
-                result.onSuccess { userEntity ->
-                    // ¡Éxito! 'userEntity' contiene los datos del usuario logueado
+                result.onSuccess {
                     _navigationEvents.emit(NavigationEvent.NavigateTo(
                         route = Screen.Main,
                         popUpToRoute = Screen.Home,
                         inclusive = true
                     ))
                 }.onFailure { exception ->
-                    // Fallo. Mostrar error en la UI
                     _uiState.update {
                         it.copy(generalError = exception.message ?: "Error desconocido")
                     }
@@ -108,37 +97,30 @@ class AuthViewModel(
                 errorEmail = emailError,
                 errorContrasena = contrasenaError,
                 errorConfirmarContrasena = confirmarContrasenaError,
-                generalError = null // Limpiar errores generales previos
+                generalError = null
             )
         }
 
         val isValid = listOfNotNull(nombreError, emailError, contrasenaError, confirmarContrasenaError).isEmpty()
         if (isValid) {
-            // Usar viewModelScope
             viewModelScope.launch {
-                // 1. Mostrar estado de carga
                 _uiState.update { it.copy(isLoading = true) }
 
-                // 2. Llamar al repositorio
                 val result = repository.registerUser(
                     nombre = _uiState.value.nombre,
                     email = _uiState.value.email,
                     contrasena = _uiState.value.contrasena
                 )
 
-                // 3. Ocultar estado de carga
                 _uiState.update { it.copy(isLoading = false) }
 
-                // 4. Manejar el resultado
                 result.onSuccess {
-                    println("¡Registro en DB exitoso!")
                     _navigationEvents.emit(NavigationEvent.NavigateTo(
                         route = Screen.Main,
                         popUpToRoute = Screen.Home,
                         inclusive = true
                     ))
                 }.onFailure { exception ->
-                    // Fallo. Mostrar error (ej. "El correo ya está registrado")
                     _uiState.update {
                         it.copy(generalError = exception.message ?: "Error al registrar")
                     }
@@ -147,8 +129,7 @@ class AuthViewModel(
         }
     }
 
-    // --- Validadores privados y reutilizables ---
-    // (Estas funciones no cambian)
+    // --- Validadores ---
 
     private fun validateName(): String? {
         val nombre = _uiState.value.nombre
@@ -159,8 +140,8 @@ class AuthViewModel(
         val email = _uiState.value.email
         return when {
             email.isBlank() -> "El correo no puede estar vacío"
-            !Patterns.EMAIL_ADDRESS.matcher(email).matches() -> "Ingresa un formato de correo válido"
-            // !email.endsWith(".com") -> "El correo debe terminar en .com" // (Esta validación es muy restrictiva, considera quitarla)
+            // USAMOS REGEX AQUÍ EN LUGAR DE PATTERNS
+            !email.matches(emailRegex) -> "Ingresa un formato de correo válido"
             else -> null
         }
     }
