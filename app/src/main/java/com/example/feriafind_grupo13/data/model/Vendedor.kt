@@ -1,12 +1,17 @@
 package com.example.feriafind_grupo13.data.model
 
-//Representa el perfil de un vendedor en una feria.
+import com.google.gson.annotations.SerializedName
 
 data class Vendedor(
+    @SerializedName("idVendedor")
     val id: String,
-    val idUsuario: String, // Vincula al Usuario que controla este perfil
+    @SerializedName("idUsuario")
+    val idUsuario: String,
+    @SerializedName("nombreVendedor")
     val nombre: String,
+    @SerializedName("descripcion")
     val descripcion: String,
-    val horario: String? = null, // Horario de atención del vendedor
-    val fotoUrl: String? = null
+    @SerializedName("fotoPerfil")
+    val fotoUrl: String? = null,
+    val horario: String? = null
 )

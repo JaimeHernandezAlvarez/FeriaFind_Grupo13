@@ -1,11 +1,13 @@
 package com.example.feriafind_grupo13.data.model
 
-// Representa una ubicación física de una feria, con sus coordenadas para el mapa.
-
+import com.google.gson.annotations.SerializedName
 data class Feria(
+    @SerializedName("idFeria")
     val id: String,
+    @SerializedName("nombreFeria")
     val nombre: String,
+    @SerializedName("ubicacion")
     val direccion: String,
-    val latitud: Double,
-    val longitud: Double
+    val latitud: Double = -33.4489, // Santiago Centro por defecto
+    val longitud: Double = -70.6693
 )

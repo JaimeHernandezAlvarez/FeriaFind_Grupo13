@@ -1,10 +1,18 @@
 package com.example.feriafind_grupo13.data.model
 
-// Modelo de relación: Indica qué vendedor está en qué feria y en qué día. Esto es clave para la funcionalidad del mapa y los filtros.
-
+import com.google.gson.annotations.SerializedName
+// Esta clase mapea los datos del microservicio "Agenda"
 data class Puesto(
+    @SerializedName("idAgenda")
     val id: String,
-    val idVendedor: String, // Clave foránea de Vendedor
-    val idFeria: String,    // Clave foránea de Feria
-    val diaSemana: String  // Ej: "Domingo", "Martes"
+    @SerializedName("idVendedor")
+    val idVendedor: String,
+    @SerializedName("idUbicacion") // En tu app lo llamabas idFeria
+    val idFeria: String,
+    @SerializedName("diaSemana")
+    val diaSemana: String,
+    @SerializedName("horaInicio")
+    val horaInicio: String? = null,
+    @SerializedName("horaTermino")
+    val horaTermino: String? = null
 )

@@ -1,15 +1,20 @@
 package com.example.feriafind_grupo13.data.model
 
-/**
- * Representa a un usuario de la aplicación, que puede ser un comprador o un vendedor.
- */
+import com.google.gson.annotations.SerializedName
+
 data class Usuario(
+    @SerializedName("idUsuario")
     val id: String,
+    @SerializedName("nombreUsuario")
     val nombre: String,
+    @SerializedName("correoElectronico")
     val email: String,
+    @SerializedName("descripcion")
     val descripcion: String? = null,
+    @SerializedName("foto")
     val fotoUrl: String? = null,
+    @SerializedName("horario")
     val horario: String? = null,
     val esVendedor: Boolean = false,
-    val vendedoresFavoritos: List<String> = emptyList() // Lista de IDs de Vendedores
+    val vendedoresFavoritos: List<String> = emptyList()
 )

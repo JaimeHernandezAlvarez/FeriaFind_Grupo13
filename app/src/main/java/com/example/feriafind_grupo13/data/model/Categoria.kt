@@ -1,8 +1,10 @@
 package com.example.feriafind_grupo13.data.model
 
-//Representa las categorías de los productos (Ej: Frutas, Verduras, Legumbres).Ayuda a organizar y filtrar los productos de manera consistente.
+import com.google.gson.annotations.SerializedName
 
 data class Categoria(
+    @SerializedName("idCategoria")
     val id: String,
+    @SerializedName("nombreCategoria")
     val nombre: String
 )
