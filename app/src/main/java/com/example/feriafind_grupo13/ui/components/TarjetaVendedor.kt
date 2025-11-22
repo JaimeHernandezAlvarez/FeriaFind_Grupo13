@@ -11,10 +11,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import com.example.feriafind_grupo13.R
 import com.example.feriafind_grupo13.data.model.Vendedor
+import coil.compose.AsyncImage
+import coil.request.ImageRequest
+
 
 /**
  * Tarjeta reutilizable para mostrar la información de un vendedor en una lista.
@@ -40,10 +43,14 @@ fun TarjetaVendedor(
             modifier = Modifier.padding(12.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // Imagen del vendedor
-            Image(
-                // TODO: Reemplazar 'R.drawable.logo' con la foto real del vendedor.
-                painter = painterResource(id = R.drawable.logo),
+            // --- IMAGEN DEL VENDEDOR (Coil) ---
+            AsyncImage(
+                model = ImageRequest.Builder(LocalContext.current)
+                    .data(vendedor.fotoUrl) // URL que viene de tu API
+                    .crossfade(true)
+                    .error(R.drawable.logo) // Logo si falla la carga
+                    .placeholder(R.drawable.logo) // Logo mientras carga
+                    .build(),
                 contentDescription = "Foto de ${vendedor.nombre}",
                 contentScale = ContentScale.Crop,
                 modifier = Modifier
@@ -53,27 +60,30 @@ fun TarjetaVendedor(
 
             Spacer(modifier = Modifier.width(16.dp))
 
-            // Columna con los detalles del vendedor
+// --- INFORMACIÓN ---
             Column(modifier = Modifier.weight(1f)) {
-                Text(text = vendedor.nombre, style = MaterialTheme.typography.titleMedium)
+                // Usamos 'nombreVendedor' tal como está en tu modelo
+                Text(
+                    text = vendedor.nombre,
+                    style = MaterialTheme.typography.titleMedium
+                )
                 Spacer(modifier = Modifier.height(4.dp))
-                Text(text = vendedor.descripcion, style = MaterialTheme.typography.bodyMedium, maxLines = 2)
 
-                // Muestra el horario solo si no es nulo
-                vendedor.horario?.let { horario ->
+                // Usamos el operador ?.let por si la descripción es nula
+                vendedor.descripcion?.let {
                     Text(
-                        text = "Horario: $horario",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = Color.Gray
+                        text = it,
+                        style = MaterialTheme.typography.bodyMedium,
+                        maxLines = 2
                     )
                 }
             }
 
-            // Botón para marcar como favorito
+            // --- BOTÓN FAVORITO ---
             IconButton(onClick = onFavoritoClick) {
                 Icon(
                     imageVector = Icons.Default.Star,
-                    contentDescription = "Marcar como Favorito",
+                    contentDescription = "Favorito",
                     tint = if (esFavorito) Color.Yellow else Color.Gray
                 )
             }

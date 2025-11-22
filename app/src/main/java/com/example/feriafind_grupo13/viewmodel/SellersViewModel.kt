@@ -1,33 +1,76 @@
 package com.example.feriafind_grupo13.viewmodel
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
-import com.example.feriafind_grupo13.data.model.Vendedor
+import androidx.lifecycle.viewModelScope
+import com.example.feriafind_grupo13.data.repository.VendedorRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
 import java.util.Locale
 
 class SellersViewModel : ViewModel() {
+
+    // 1. Instanciamos el Repositorio que creamos antes
+    private val repository = VendedorRepository()
 
     private val _uiState = MutableStateFlow(SellersUiState())
     val uiState = _uiState.asStateFlow()
 
     init {
-        val vendedores = listOf(
-            Vendedor("101", "user1", "Juan Pérez", "Vendedor desde 2017", "9:00 - 14:00", ""),
-            Vendedor("102", "user2", "Pedro Soto", "Vendedor desde 2020", "12:00 - 15:30", ""),
-            Vendedor("103", "user3", "Luis Rojas", "Vendedor desde 2023", "8:30 - 13:00", "")
-        )
-        _uiState.value = SellersUiState(
-            todosLosVendedores = vendedores,
-            vendedoresMostrados = vendedores,
-            favoritos = setOf("101") // Juan Pérez es favorito por defecto
-        )
+        // 2. En lugar de crear una lista manual, llamamos a la API al iniciar
+        fetchVendedores()
+    }
+    private fun fetchVendedores() {
+        // Iniciamos carga
+        _uiState.update { it.copy(isLoading = true) }
+
+        viewModelScope.launch {
+            try {
+                Log.d("API_DEBUG", "Llamando a API...")
+                val lista = repository.getVendedores()
+                Log.d("API_DEBUG", "¡Éxito! Recibidos: ${lista.size}")
+
+                _uiState.update {
+                    it.copy(
+                        todosLosVendedores = lista,
+                        vendedoresMostrados = lista,
+                        isLoading = false, // Apagamos carga
+                        errorMessage = null
+                    )
+                }
+            } catch (e: Exception) {
+                Log.e("API_DEBUG", "Error: ${e.message}")
+                _uiState.update {
+                    it.copy(
+                        isLoading = false, // Apagamos carga aunque fallé
+                        errorMessage = "Fallo conexión: ${e.message}"
+                    )
+                }
+            }
+        }
     }
 
     fun onSearchQueryChange(query: String) {
         _uiState.update { it.copy(searchQuery = query) }
         filtrarVendedores()
+    }
+
+    private fun filtrarVendedores() {
+        val query = _uiState.value.searchQuery
+        val todos = _uiState.value.todosLosVendedores
+
+        val filtrados = if (query.isBlank()) {
+            todos
+        } else {
+            todos.filter { vendedor ->
+                // Ajusta 'nombreVendedor' según tu modelo real
+                vendedor.nombre.lowercase(Locale.getDefault())
+                    .contains(query.lowercase(Locale.getDefault()))
+            }
+        }
+        _uiState.update { it.copy(vendedoresMostrados = filtrados) }
     }
 
     fun onFavoritoClick(vendedorId: String) {
@@ -38,17 +81,5 @@ class SellersViewModel : ViewModel() {
             favoritosActuales.add(vendedorId)
         }
         _uiState.update { it.copy(favoritos = favoritosActuales) }
-    }
-
-    private fun filtrarVendedores() {
-        val query = _uiState.value.searchQuery
-        val vendedoresFiltrados = if (query.isBlank()) {
-            _uiState.value.todosLosVendedores
-        } else {
-            _uiState.value.todosLosVendedores.filter {
-                it.nombre.lowercase(Locale.getDefault()).contains(query.lowercase(Locale.getDefault()))
-            }
-        }
-        _uiState.update { it.copy(vendedoresMostrados = vendedoresFiltrados) }
     }
 }

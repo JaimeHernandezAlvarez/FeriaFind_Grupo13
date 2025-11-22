@@ -7,5 +7,7 @@ data class SellersUiState(
     val todosLosVendedores: List<Vendedor> = emptyList(),
     val vendedoresMostrados: List<Vendedor> = emptyList(),
     val searchQuery: String = "",
-    val favoritos: Set<String> = emptySet()
+    val favoritos: Set<String> = emptySet(),
+    val errorMessage: String? = null,
+    val isLoading: Boolean = true
 )
