@@ -1,6 +1,5 @@
 package com.example.feriafind_grupo13.ui.screens.principal
 
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.MoreVert
@@ -8,13 +7,11 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.example.feriafind_grupo13.R
-import com.example.feriafind_grupo13.ui.components.ComponenteSelectorDesplegable // Nombre importado actualizado
+import com.example.feriafind_grupo13.ui.components.ComponenteSelectorDesplegable
 import com.example.feriafind_grupo13.viewmodel.MapViewModel
+import com.example.feriafind_grupo13.ui.components.OsmMapView
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -59,17 +56,30 @@ fun MapScreen(viewModel: MapViewModel = viewModel()) {
                     modifier = Modifier.weight(1f)
                 )
             }
+            // --- EL RECTÁNGULO DEL MAPA ---
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(400.dp)
+                    .padding(horizontal = 16.dp),
+                elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
+                shape = MaterialTheme.shapes.medium
+            ) {
+                OsmMapView(
+                    modifier = Modifier.fillMaxSize()
+                )
+            }
             Box(
-                modifier = Modifier.weight(1f),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp),
                 contentAlignment = Alignment.Center
             ) {
-                Image(
-                    painter = painterResource(id = R.drawable.logo),
-                    contentDescription = "Mapa Placeholder",
-                    modifier = Modifier.fillMaxSize(),
-                    contentScale = ContentScale.Crop
+                Text(
+                    text = "Selecciona una feria en el mapa para ver detalles.",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
-                Text("Aquí iría el mapa interactivo", style = MaterialTheme.typography.headlineSmall)
             }
         }
     }

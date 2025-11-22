@@ -77,6 +77,9 @@ dependencies {
     implementation("com.squareup.retrofit2:converter-gson:2.9.0")
     implementation("com.squareup.okhttp3:logging-interceptor:4.11.0") // Útil para ver los logs de red
 
+    // --- MAPAS (OpenStreetMap) ---
+    implementation("org.osmdroid:osmdroid-android:6.1.18")
+
     // --- Testing (Guia 15 Pruebas unitarias) ---
 
     // Unit Testing (Lógica)

@@ -8,6 +8,9 @@
         android:required="false" />
     <!-- 2. Solicitar permiso para usar la cámara -->
     <uses-permission android:name="android.permission.CAMERA" />
+    <!-- Permisos requeridos por OpenStreetMap -->
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
 
     <application
         android:allowBackup="true"
