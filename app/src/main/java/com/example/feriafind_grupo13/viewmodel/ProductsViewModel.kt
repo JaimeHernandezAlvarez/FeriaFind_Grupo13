@@ -1,28 +1,52 @@
 package com.example.feriafind_grupo13.viewmodel
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
-import com.example.feriafind_grupo13.data.model.Producto
+import androidx.lifecycle.viewModelScope
+import com.example.feriafind_grupo13.data.repository.ProductRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
 import java.util.Locale
 
 class ProductsViewModel : ViewModel() {
 
+    private val repository = ProductRepository()
     private val _uiState = MutableStateFlow(ProductsUiState())
     val uiState = _uiState.asStateFlow()
 
     init {
-        // Cargar productos de ejemplo
-        val productos = listOf(
-            Producto("1", "Tomates", 1200.0, "Verduras", "", "101"),
-            Producto("2", "Naranjas", 1100.0, "Frutas", "", "102"),
-            Producto("3", "Lechugas", 500.0, "Verduras", "", "103")
-        )
-        _uiState.value = ProductsUiState(
-            todosLosProductos = productos,
-            productosMostrados = productos
-        )
+        fetchProductos()
+    }
+
+    private fun fetchProductos() {
+        _uiState.update { it.copy(isLoading = true) }
+
+        viewModelScope.launch {
+            try {
+                Log.d("API_PRODUCTOS", "Cargando productos...")
+                val lista = repository.getProductos()
+                Log.d("API_PRODUCTOS", "Productos recibidos: ${lista.size}")
+
+                _uiState.update {
+                    it.copy(
+                        todosLosProductos = lista,
+                        productosMostrados = lista,
+                        isLoading = false,
+                        errorMessage = null
+                    )
+                }
+            } catch (e: Exception) {
+                Log.e("API_PRODUCTOS", "Error: ${e.message}")
+                _uiState.update {
+                    it.copy(
+                        isLoading = false,
+                        errorMessage = "Error al cargar: ${e.message}"
+                    )
+                }
+            }
+        }
     }
 
     fun onSearchQueryChange(query: String) {
@@ -32,13 +56,16 @@ class ProductsViewModel : ViewModel() {
 
     private fun filtrarProductos() {
         val query = _uiState.value.searchQuery
-        val productosFiltrados = if (query.isBlank()) {
-            _uiState.value.todosLosProductos
+        val todos = _uiState.value.todosLosProductos
+
+        val filtrados = if (query.isBlank()) {
+            todos
         } else {
-            _uiState.value.todosLosProductos.filter {
-                it.nombre.lowercase(Locale.getDefault()).contains(query.lowercase(Locale.getDefault()))
+            todos.filter {
+                it.nombre.lowercase(Locale.getDefault())
+                    .contains(query.lowercase(Locale.getDefault()))
             }
         }
-        _uiState.update { it.copy(productosMostrados = productosFiltrados) }
+        _uiState.update { it.copy(productosMostrados = filtrados) }
     }
 }

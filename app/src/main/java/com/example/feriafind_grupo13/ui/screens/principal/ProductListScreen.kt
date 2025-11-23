@@ -7,6 +7,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -32,14 +33,32 @@ fun ProductListScreen(viewModel: ProductsViewModel = viewModel()) {
                 modifier = Modifier.fillMaxWidth()
             )
             Spacer(Modifier.height(16.dp))
-            LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                items(uiState.productosMostrados) { producto ->
-                    // Aquí necesitaríamos una forma de obtener los nombres, por ahora usamos IDs.
-                    TarjetaProducto(
-                        producto = producto,
-                        nombreCategoria = producto.categoria,
-                        nombreVendedor = "Vendedor ${producto.idVendedor}"
-                    )
+            when {
+                uiState.isLoading -> {
+                    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                        CircularProgressIndicator()
+                    }
+                }
+                uiState.errorMessage != null -> {
+                    Text("⚠️ ${uiState.errorMessage}", color = MaterialTheme.colorScheme.error)
+                }
+                uiState.productosMostrados.isEmpty() -> {
+                    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                        Text("No hay productos disponibles.")
+                    }
+                }
+                else -> {
+                    LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        items(uiState.productosMostrados) { producto ->
+                            // Asegúrate de que tu TarjetaProducto acepte el objeto 'producto'
+                            TarjetaProducto(
+                                producto = producto,
+                                // Si tu TarjetaProducto pide strings específicos, pásalos aquí:
+                                nombreCategoria = "Cat: ${producto.categoria}",
+                                nombreVendedor = "Vend: ${producto.idVendedor}"
+                            )
+                        }
+                    }
                 }
             }
         }

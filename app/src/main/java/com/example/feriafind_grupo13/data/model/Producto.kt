@@ -3,15 +3,23 @@ package com.example.feriafind_grupo13.data.model
 import com.google.gson.annotations.SerializedName
 data class Producto(
     @SerializedName("idProducto")
-    val id: String,
-    @SerializedName("nombreProducto")
+    val id: Int,
+
+    @SerializedName("nombre")
     val nombre: String,
+
     @SerializedName("precio")
     val precio: Double,
-    @SerializedName("categoria")
-    val categoria: String,
+
+    @SerializedName("idCategoria")
+    val categoria: Int,
+
     @SerializedName("imagen")
-    val imagenUrl: String? = null, // Puede ser nulo si no hay foto
+    val imagenUrl: String? = null,
+
     @SerializedName("idVendedor")
-    val idVendedor: String
+    val idVendedor: Int,
+
+    @SerializedName("unidadMedida")
+    val unidadMedida: String? = null
 )
