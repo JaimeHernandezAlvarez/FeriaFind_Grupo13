@@ -1,6 +1,5 @@
-package com.example.feriafind_grupo13.data.remote
+package com.example.feriafind_grupo13.data.model
 
-import com.example.feriafind_grupo13.data.model.Vendedor
 import com.google.gson.annotations.SerializedName
 
 // Estructura para leer el JSON formato HATEOAS de tu imagen

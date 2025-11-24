@@ -1,6 +1,6 @@
 package com.example.feriafind_grupo13.data.remote
 
-import com.example.feriafind_grupo13.data.remote.ProductoResponse
+import com.example.feriafind_grupo13.data.model.ProductoResponse
 import retrofit2.http.GET
 
 interface ProductApiService {

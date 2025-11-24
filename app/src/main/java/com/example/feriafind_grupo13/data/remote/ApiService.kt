@@ -1,6 +1,7 @@
 package com.example.feriafind_grupo13.data.remote
 
 import com.example.feriafind_grupo13.data.model.Vendedor
+import com.example.feriafind_grupo13.data.model.VendedorResponse
 import retrofit2.http.GET
 import retrofit2.http.Path
 
