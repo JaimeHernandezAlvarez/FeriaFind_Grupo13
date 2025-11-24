@@ -3,15 +3,14 @@ package com.example.feriafind_grupo13.data.remote
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 
-object UserRetrofitInstance {
-    // Tu URL de Render para usuarios
-    private const val BASE_URL = "https://microuser.onrender.com/"
+object WeatherRetrofitInstance {
+    private const val BASE_URL = "https://api.open-meteo.com/"
 
-    val api: UserApiService by lazy {
+    val api: WeatherApiService by lazy {
         Retrofit.Builder()
             .baseUrl(BASE_URL)
             .addConverterFactory(GsonConverterFactory.create())
             .build()
-            .create(UserApiService::class.java)
+            .create(WeatherApiService::class.java)
     }
 }

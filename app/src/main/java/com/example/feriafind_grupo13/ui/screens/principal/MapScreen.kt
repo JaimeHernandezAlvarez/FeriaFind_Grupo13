@@ -2,6 +2,7 @@ package com.example.feriafind_grupo13.ui.screens.principal
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Cloud
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -26,14 +27,25 @@ fun MapScreen(viewModel: MapViewModel = viewModel()) {
             TopAppBar(
                 title = { Text("Mapa de Ferias") },
                 actions = {
-                    IconButton(onClick = { /* TODO: Implementar lógica de filtros */ }) {
-                        Icon(Icons.Default.MoreVert, contentDescription = "Filtros")
-                    }
+                    IconButton(onClick = { }) { Icon(Icons.Default.MoreVert,"Filtros")}
                 }
             )
         }
     ) { innerPadding ->
         Column(modifier = Modifier.padding(innerPadding).fillMaxSize()) {
+            Card(
+                modifier = Modifier.fillMaxWidth().padding(8.dp),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.secondaryContainer)
+            ) {
+                Row(
+                    modifier = Modifier.padding(12.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(Icons.Default.Cloud, contentDescription = null)
+                    Spacer(Modifier.width(8.dp))
+                    Text(text = uiState.climaInfo, style = MaterialTheme.typography.titleMedium)
+                }
+            }
             Row(
                 modifier = Modifier
                     .fillMaxWidth()

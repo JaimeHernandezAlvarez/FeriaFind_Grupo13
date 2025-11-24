@@ -11,18 +11,16 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext // <-- 1. IMPORTAR CONTEXT
+import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import androidx.compose.animation.AnimatedContentTransitionScope
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
-// --- 2. IMPORTAR TODAS LAS DEPENDENCIAS ---
 import com.example.feriafind_grupo13.data.local.database.AppDatabase
 import com.example.feriafind_grupo13.data.local.storage.UserPreferences
 import com.example.feriafind_grupo13.data.repository.UserRepository
@@ -34,7 +32,7 @@ import com.example.feriafind_grupo13.ui.screens.autenticacion.RegisterScreen
 import com.example.feriafind_grupo13.ui.screens.principal.MainScreen
 import com.example.feriafind_grupo13.ui.theme.FeriaFind_Grupo13Theme
 import com.example.feriafind_grupo13.viewmodel.AuthViewModel
-import com.example.feriafind_grupo13.viewmodel.AuthViewModelFactory // <-- 3. IMPORTAR LA FACTORY
+import com.example.feriafind_grupo13.viewmodel.AuthViewModelFactory
 import com.example.feriafind_grupo13.viewmodel.MainViewModel
 import kotlinx.coroutines.flow.collectLatest
 

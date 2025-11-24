@@ -33,13 +33,11 @@ fun OsmMapView(
             controller.setCenter(GeoPoint(-33.4489, -70.6693))
         }
     }
-
     DisposableEffect(mapView) {
         onDispose {
             mapView.onDetach() // Limpieza de memoria al salir
         }
     }
-
     AndroidView(
         factory = {
             // Aquí podemos añadir marcadores iniciales

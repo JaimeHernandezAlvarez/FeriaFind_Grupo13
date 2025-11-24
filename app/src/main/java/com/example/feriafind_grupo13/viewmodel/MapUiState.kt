@@ -6,5 +6,6 @@ import com.example.feriafind_grupo13.data.model.Feria
 data class MapUiState(
     val ferias: List<Feria> = emptyList(),
     val diaSeleccionado: String = "Domingo",
-    val rubroSeleccionado: String = "Verduras"
+    val rubroSeleccionado: String = "Verduras",
+    val climaInfo: String = "Cargando clima..."
 )
