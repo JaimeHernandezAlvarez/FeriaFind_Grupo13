@@ -1,25 +1,27 @@
 package com.example.feriafind_grupo13.data.remote
 
 import com.example.feriafind_grupo13.data.model.Usuario
+import com.example.feriafind_grupo13.data.model.UsuarioResponse
 import retrofit2.Response
 import retrofit2.http.Body
 import retrofit2.http.GET
 import retrofit2.http.POST
+import retrofit2.http.PUT
 import retrofit2.http.Path
 
 interface UserApiService {
-
-    // REGISTRO: Según tu Swagger POST /api/v1/usuarios
+    // REGISTRO
     @POST("api/v1/usuarios")
     suspend fun registrarUsuario(@Body usuario: Map<String, String>): Response<Usuario>
 
-    // LOGIN: Como no vi un endpoint explícito "/login" en tu foto,
-    // usaremos una búsqueda por email para validar (común en MVP académicos si no hay Auth Controller)
-    // Si tienes un endpoint de login real, cámbialo aquí.
-    @GET("api/v1/usuarios/search/findByCorreoElectronico")
-    suspend fun buscarPorCorreo(@retrofit2.http.Query("correo") correo: String): Response<Usuario>
+    // [CORREGIDO] "Traer todos" en vez de "Buscar por correo" (que no existía)
+    @GET("api/v1/usuarios")
+    suspend fun obtenerTodosLosUsuarios(): Response<UsuarioResponse>
 
-    // OPCIONAL: Obtener usuario por ID
-    @GET("api/v1/usuarios/{id}")
-    suspend fun getUsuarioById(@Path("id") id: String): Response<Usuario>
+    // ACTUALIZAR (PUT)
+    @PUT("api/v1/usuarios/{id}")
+    suspend fun actualizarUsuario(
+        @Path("id") id: String,
+        @Body usuario: Map<String, String>
+    ): Response<Usuario>
 }

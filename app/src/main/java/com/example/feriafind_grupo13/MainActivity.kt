@@ -31,8 +31,8 @@ import com.example.feriafind_grupo13.ui.screens.autenticacion.LoginScreen
 import com.example.feriafind_grupo13.ui.screens.autenticacion.RegisterScreen
 import com.example.feriafind_grupo13.ui.screens.principal.MainScreen
 import com.example.feriafind_grupo13.ui.theme.FeriaFind_Grupo13Theme
+import com.example.feriafind_grupo13.viewmodel.AppViewModelFactory // [CAMBIO] Importamos la nueva Factory
 import com.example.feriafind_grupo13.viewmodel.AuthViewModel
-import com.example.feriafind_grupo13.viewmodel.AuthViewModelFactory
 import com.example.feriafind_grupo13.viewmodel.MainViewModel
 import kotlinx.coroutines.flow.collectLatest
 
@@ -47,30 +47,20 @@ class MainActivity : ComponentActivity() {
                     color = MaterialTheme.colorScheme.background
                 ) {
                     val mainViewModel: MainViewModel = viewModel()
-
-                    // --- INICIO DE LA MODIFICACIÓN ---
-
-                    // 4. Obtener el contexto de la aplicación
                     val context = LocalContext.current.applicationContext
-
-                    // 5. Crear las dependencias (DB, DAO, Prefs, Repo)
                     val db = AppDatabase.getInstance(context)
                     val userDao = db.userDao()
                     val userPrefs = UserPreferences(context)
                     val repository = UserRepository(userDao, userPrefs)
-
-                    // 6. Crear la Fábrica
-                    val authFactory = AuthViewModelFactory(repository)
-
-                    // 7. Crear el AuthViewModel USANDO la fábrica
-                    val authViewModel: AuthViewModel = viewModel(factory = authFactory)
-
-                    // --- FIN DE LA MODIFICACIÓN ---
+                    // Esto es vital para que la app no crashee al intentar dar like.
+                    val favoriteDao = db.favoriteDao()
+                    // Esta factory es "inteligente" y sabe inyectar el repositorio donde se necesite.
+                    val userFactory = AppViewModelFactory(userRepository = repository)
+                    val authViewModel: AuthViewModel = viewModel(factory = userFactory)
 
                     val navController = rememberNavController()
 
                     // Escuchar eventos de navegación del MainViewModel...
-                    // (Este código se queda igual)
                     LaunchedEffect(key1 = Unit) {
                         mainViewModel.navigationEvents.collectLatest { event ->
                             when (event) {
@@ -85,20 +75,11 @@ class MainActivity : ComponentActivity() {
                                         restoreState = true
                                     }
                                 }
-
                                 is NavigationEvent.PopBackStack -> navController.popBackStack()
                                 is NavigationEvent.NavigateUp -> navController.navigateUp()
                             }
                         }
                     }
-
-                    // Escuchar eventos de navegación del AuthViewModel...
-                    // (Este código se queda igual)
-                    // NOTA: Este bloque ahora funciona como querías,
-                    // pero ya no es estrictamente necesario si tus pantallas
-                    // (Login/Register) manejan su propia navegación como
-                    // lo hacían en tu código original.
-                    // Puedes dejarlo o quitarlo, pero no causará error.
                     LaunchedEffect(key1 = Unit) {
                         authViewModel.navigationEvents.collectLatest { event ->
                             when (event) {
@@ -118,7 +99,6 @@ class MainActivity : ComponentActivity() {
                             }
                         }
                     }
-
                     // Layout base con NavHost
                     Scaffold(
                         modifier = Modifier.fillMaxSize()
@@ -258,7 +238,12 @@ class MainActivity : ComponentActivity() {
                                     ) + fadeOut(animationSpec = tween(animDuration))
                                 }
                             ) {
-                                MainScreen(repository = repository)
+                                // [MODIFICADO] Pasamos explicitamente userRepository y favoriteDao.
+                                // Esto permite que MainScreen construya los ViewModels internos correctamente.
+                                MainScreen(
+                                    userRepository = repository,
+                                    favoriteDao = favoriteDao
+                                )
                             }
                         }
                     }

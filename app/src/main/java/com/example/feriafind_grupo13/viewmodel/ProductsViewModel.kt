@@ -10,16 +10,13 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import java.util.Locale
 
-class ProductsViewModel : ViewModel() {
-
-    private val repository = ProductRepository()
+class ProductsViewModel(private val repository: ProductRepository = ProductRepository()) : ViewModel() {
     private val _uiState = MutableStateFlow(ProductsUiState())
     val uiState = _uiState.asStateFlow()
 
     init {
         fetchProductos()
     }
-
     private fun fetchProductos() {
         _uiState.update { it.copy(isLoading = true) }
 
@@ -48,18 +45,14 @@ class ProductsViewModel : ViewModel() {
             }
         }
     }
-
     fun onSearchQueryChange(query: String) {
         _uiState.update { it.copy(searchQuery = query) }
         filtrarProductos()
     }
-
     private fun filtrarProductos() {
         val query = _uiState.value.searchQuery
         val todos = _uiState.value.todosLosProductos
-
-        val filtrados = if (query.isBlank()) {
-            todos
+        val filtrados = if (query.isBlank()) { todos
         } else {
             todos.filter {
                 it.nombre.lowercase(Locale.getDefault())

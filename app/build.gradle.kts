@@ -97,4 +97,7 @@ dependencies {
     // Herramientas de Debug
     debugImplementation(libs.androidx.ui.tooling)
     debugImplementation(libs.androidx.ui.test.manifest)
+
+    // Librería para verificar contraseñas BCrypt (Spring Security usa esto)
+    implementation("org.mindrot:jbcrypt:0.4")
 }
