@@ -9,6 +9,8 @@ data class Usuario(
     val nombre: String,
     @SerializedName("correoElectronico")
     val email: String,
+    @SerializedName("password")
+    val password: String = "",
     @SerializedName("descripcion")
     val descripcion: String? = null,
     @SerializedName("foto")

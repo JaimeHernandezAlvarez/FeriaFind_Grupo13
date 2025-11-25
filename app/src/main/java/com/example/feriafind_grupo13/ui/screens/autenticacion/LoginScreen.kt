@@ -12,16 +12,17 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.example.feriafind_grupo13.R
+import com.example.feriafind_grupo13.navigation.NavigationEvent
 import com.example.feriafind_grupo13.navigation.Screen
 import com.example.feriafind_grupo13.ui.components.AuthCard
 import com.example.feriafind_grupo13.ui.components.BotonAuth
 import com.example.feriafind_grupo13.ui.components.CampoDeTextoAuth
 import com.example.feriafind_grupo13.ui.components.CampoDeTextoContrasena
 import com.example.feriafind_grupo13.viewmodel.AuthViewModel
-import com.example.feriafind_grupo13.navigation.NavigationEvent
 import kotlinx.coroutines.flow.collectLatest
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -32,6 +33,7 @@ fun LoginScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
 
+    // Manejo de eventos de navegación (éxito al login)
     LaunchedEffect(key1 = true) {
         viewModel.navigationEvents.collectLatest { event ->
             if (event is NavigationEvent.NavigateTo) {
@@ -94,18 +96,41 @@ fun LoginScreen(
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            BotonAuth(
-                text = "Iniciar Sesión",
-                onClick = {
-                    viewModel.iniciarSesion()
-                }
-            )
+            // --- SECCIÓN DE ERROR GENERAL (Backend / Conexión) ---
+            if (uiState.generalError != null) {
+                Text(
+                    text = uiState.generalError!!,
+                    color = MaterialTheme.colorScheme.error,
+                    style = MaterialTheme.typography.bodyMedium,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(bottom = 16.dp)
+                )
+            }
+
+            // --- BOTÓN O LOADING ---
+            if (uiState.isLoading) {
+                // Si está cargando, mostramos la ruedita y ocultamos el botón
+                CircularProgressIndicator()
+            } else {
+                BotonAuth(
+                    text = "Iniciar Sesión",
+                    onClick = {
+                        viewModel.iniciarSesion()
+                    }
+                )
+            }
+
             Spacer(modifier = Modifier.height(12.dp))
 
-            TextButton(onClick = { navController.navigate(Screen.Register.route) }) {
+            // Deshabilitamos el ir al registro si estamos cargando para evitar bugs visuales
+            TextButton(
+                onClick = { navController.navigate(Screen.Register.route) },
+                enabled = !uiState.isLoading
+            ) {
                 Text("¿No tienes cuenta? Regístrate")
             }
         }
     }
 }
-

@@ -19,54 +19,56 @@ class UserRepository(
     suspend fun loginUser(email: String, contrasena: String): Result<UserEntity> {
         return withContext(Dispatchers.IO) {
             try {
-                // 1. Traemos TODOS los usuarios
-                val response = UserRetrofitInstance.api.obtenerTodosLosUsuarios()
+                // Preparamos los datos para enviar
+                val credenciales = mapOf(
+                    "correoElectronico" to email, // Asegúrate que coincida con lo que espera el Backend
+                    "password" to contrasena
+                )
+
+                // --- LLAMADA AL NUEVO ENDPOINT ---
+                val response = UserRetrofitInstance.api.loginUsuario(credenciales)
 
                 if (response.isSuccessful && response.body() != null) {
-                    val lista = response.body()?.embedded?.usuarios ?: emptyList()
+                    val remoteUser = response.body()!!
 
-                    // 2. Buscamos manualmente en la lista
-                    val remoteUser = lista.find {
-                        it.email.equals(email, ignoreCase = true)
-                    }
+                    // ¡ÉXITO! El servidor dijo que sí.
+                    // Guardamos en local...
+                    val passwordHash = BCrypt.hashpw(contrasena, BCrypt.gensalt())
 
-                    if (remoteUser != null) {
-                        // ¡ENCONTRADO!
+                    val userEntity = UserEntity(
+                        nombre = remoteUser.nombre,
+                        email = remoteUser.email,
+                        password = passwordHash,
+                        descripcion = remoteUser.descripcion,
+                        horario = remoteUser.horario,
+                        fotoUri = remoteUser.fotoUrl
+                    )
 
-                        // Generamos un hash nuevo válido para guardar en local
-                        val passwordHash = BCrypt.hashpw(contrasena, BCrypt.gensalt())
-
-                        val userEntity = UserEntity(
-                            nombre = remoteUser.nombre,
-                            email = remoteUser.email,
-                            password = passwordHash, // Guardamos hash
-                            descripcion = remoteUser.descripcion,
-                            horario = remoteUser.horario,
-                            fotoUri = remoteUser.fotoUrl
-                        )
-
-                        // Guardamos en local
-                        val existingUser = userDao.findUserByEmail(email)
-                        if (existingUser != null) {
-                            userDao.updateUser(userEntity.copy(id = existingUser.id))
-                        } else {
-                            userDao.insertUser(userEntity)
-                        }
-
-                        // Sesión iniciada
-                        userPreferences.setLoggedIn(true)
-                        userPreferences.saveUserEmail(email)
-                        Result.success(userEntity)
+                    // Guardado en BD local (Room)
+                    val existingUser = userDao.findUserByEmail(email)
+                    if (existingUser != null) {
+                        userDao.updateUser(userEntity.copy(id = existingUser.id))
                     } else {
-                        Result.failure(Exception("Usuario no encontrado en la nube."))
+                        userDao.insertUser(userEntity)
                     }
+
+                    // Preferencias
+                    userPreferences.setLoggedIn(true)
+                    userPreferences.saveUserEmail(email)
+
+                    Result.success(userEntity)
+
                 } else {
-                    // Falló la API, intentamos local
-                    loginLocal(email, contrasena)
+                    // Si el servidor devuelve 401, entra aquí
+                    if (response.code() == 401) {
+                        Result.failure(Exception("Correo o contraseña incorrectos"))
+                    } else {
+                        Result.failure(Exception("Error Servidor: ${response.code()}"))
+                    }
                 }
             } catch (e: Exception) {
-                Log.e("Login", "Error API: ${e.message}")
-                loginLocal(email, contrasena)
+                Log.e("LOGIN_DEBUG", "Error conexión: ${e.message}")
+                Result.failure(Exception("Error de conexión con el servidor"))
             }
         }
     }
@@ -139,28 +141,44 @@ class UserRepository(
     suspend fun updateUserProfile(user: UserEntity): Result<Unit> {
         return withContext(Dispatchers.IO) {
             try {
-                // Buscamos ID en la API primero
-                val response = UserRetrofitInstance.api.obtenerTodosLosUsuarios()
-                val lista = response.body()?.embedded?.usuarios ?: emptyList()
+                // 1. Buscamos al usuario en la nube usando su email para OBTENER SU ID
+                // Ya no usamos obtenerTodosLosUsuarios()
+                val searchResponse = UserRetrofitInstance.api.buscarUsuarioPorEmail(user.email)
 
-                val remoteUser = lista.find { it.email.equals(user.email, true) }
-                val backendId = remoteUser?.id ?: throw Exception("Usuario no sincronizado")
+                // Verificamos si lo encontramos
+                if (!searchResponse.isSuccessful || searchResponse.body() == null) {
+                    throw Exception("No se pudo sincronizar: Usuario no encontrado en la nube.")
+                }
 
+                val remoteUser = searchResponse.body()!!
+                // Aquí obtenemos el ID que necesitamos para el PUT
+                val backendId = remoteUser.id
+
+                if (backendId.isEmpty()) {
+                    throw Exception("Error: El usuario remoto no tiene ID válido.")
+                }
+
+                // 2. Preparamos los datos para actualizar
                 val mapaUpdate = mapOf(
                     "nombreUsuario" to user.nombre,
+                    "correoElectronico" to user.email, // Es bueno enviarlo también por si acaso
                     "descripcion" to (user.descripcion ?: ""),
                     "horario" to (user.horario ?: ""),
                     "foto" to (user.fotoUri ?: "")
+                    // NOTA: No enviamos la contraseña aquí para no sobrescribirla con nulos
                 )
 
+                // 3. Ejecutamos la actualización (PUT)
                 val updateResponse = UserRetrofitInstance.api.actualizarUsuario(backendId, mapaUpdate)
 
                 if (updateResponse.isSuccessful) {
+                    // Actualizamos también la base de datos local (Room)
                     userDao.updateUser(user)
                     Result.success(Unit)
                 } else {
-                    Result.failure(Exception("Error update: ${updateResponse.code()}"))
+                    Result.failure(Exception("Error al actualizar en servidor: ${updateResponse.code()}"))
                 }
+
             } catch (e: Exception) {
                 Result.failure(e)
             }

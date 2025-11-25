@@ -10,6 +10,6 @@ data class UsuarioResponse(
 
 data class EmbeddedUsuario(
     // "usuarioList" es el nombre por defecto que Spring Data REST le da a la colección
-    @SerializedName("usuarioList")
+    @SerializedName("usuarios")
     val usuarios: List<Usuario>
 )
