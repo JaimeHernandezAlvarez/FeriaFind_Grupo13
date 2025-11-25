@@ -14,27 +14,21 @@ class UserRepository(
     private val userDao: UserDao,
     private val userPreferences: UserPreferences
 ) {
+    private val TAG = "FERIA_FIND_DEBUG"
 
-    // --- LOGIN ---
+
     suspend fun loginUser(email: String, contrasena: String): Result<UserEntity> {
         return withContext(Dispatchers.IO) {
             try {
-                // Preparamos los datos para enviar
-                val credenciales = mapOf(
-                    "correoElectronico" to email, // Asegúrate que coincida con lo que espera el Backend
-                    "password" to contrasena
-                )
-
-                // --- LLAMADA AL NUEVO ENDPOINT ---
+                Log.d(TAG, "Intentando Login para: $email")
+                val credenciales = mapOf("correoElectronico" to email, "password" to contrasena)
                 val response = UserRetrofitInstance.api.loginUsuario(credenciales)
 
                 if (response.isSuccessful && response.body() != null) {
                     val remoteUser = response.body()!!
+                    Log.d(TAG, "Login exitoso en servidor. Usuario: ${remoteUser.nombre}")
 
-                    // ¡ÉXITO! El servidor dijo que sí.
-                    // Guardamos en local...
                     val passwordHash = BCrypt.hashpw(contrasena, BCrypt.gensalt())
-
                     val userEntity = UserEntity(
                         nombre = remoteUser.nombre,
                         email = remoteUser.email,
@@ -44,7 +38,6 @@ class UserRepository(
                         fotoUri = remoteUser.fotoUrl
                     )
 
-                    // Guardado en BD local (Room)
                     val existingUser = userDao.findUserByEmail(email)
                     if (existingUser != null) {
                         userDao.updateUser(userEntity.copy(id = existingUser.id))
@@ -52,87 +45,67 @@ class UserRepository(
                         userDao.insertUser(userEntity)
                     }
 
-                    // Preferencias
                     userPreferences.setLoggedIn(true)
                     userPreferences.saveUserEmail(email)
-
                     Result.success(userEntity)
-
                 } else {
-                    // Si el servidor devuelve 401, entra aquí
-                    if (response.code() == 401) {
-                        Result.failure(Exception("Correo o contraseña incorrectos"))
-                    } else {
-                        Result.failure(Exception("Error Servidor: ${response.code()}"))
-                    }
+                    if (response.code() == 401) Result.failure(Exception("Credenciales incorrectas"))
+                    else Result.failure(Exception("Error Servidor: ${response.code()}"))
                 }
             } catch (e: Exception) {
-                Log.e("LOGIN_DEBUG", "Error conexión: ${e.message}")
-                Result.failure(Exception("Error de conexión con el servidor"))
+                Result.failure(Exception("Error conexión: ${e.message}"))
             }
         }
     }
 
-    // --- LOGIN LOCAL ---
-    private suspend fun loginLocal(email: String, contrasenaPlana: String): Result<UserEntity> {
-        val localUser = userDao.findUserByEmail(email)
-        return if (localUser != null) {
-            // Verificamos contraseña con BCrypt
-            val isCorrect = try {
-                BCrypt.checkpw(contrasenaPlana, localUser.password)
-            } catch (e: Exception) {
-                localUser.password == contrasenaPlana
-            }
-
-            if (isCorrect) {
-                userPreferences.setLoggedIn(true)
-                userPreferences.saveUserEmail(email)
-                Result.success(localUser)
-            } else {
-                Result.failure(Exception("Contraseña incorrecta"))
-            }
-        } else {
-            Result.failure(Exception("Usuario no encontrado localmente."))
-        }
-    }
-
-    // --- REGISTRO ---
     suspend fun registerUser(nombre: String, email: String, contrasena: String): Result<Unit> {
         return withContext(Dispatchers.IO) {
             try {
-                // Enviamos a la API
+                Log.d(TAG, "Iniciando registro para: $email")
+                // 1. Mapa exacto según tu modelo Java (Usuario.java)
                 val usuarioMap = mapOf(
                     "nombreUsuario" to nombre,
                     "correoElectronico" to email,
-                    "password" to contrasena,
-                    "descripcion" to "Nuevo usuario",
-                    "foto" to ""
+                    "contrasena" to contrasena,
+                    "descripcion" to "Nuevo usuario de FeriaFind", // Valor por defecto para evitar nulls
+                    "foto" to "", // Valor vacío en lugar de null
+                    "horario" to "9:00 - 18:00" // Valor por defecto
                 )
+
                 val response = UserRetrofitInstance.api.registrarUsuario(usuarioMap)
 
                 if (response.isSuccessful) {
-                    // Guardamos en local con Hash
+                    Log.d(TAG, "Registro exitoso en API")
+                    // 2. Guardar sesión localmente para entrar directo
                     val hashLocal = BCrypt.hashpw(contrasena, BCrypt.gensalt())
-                    val newUserLocal = UserEntity(nombre = nombre, email = email, password = hashLocal)
-
+                    val newUserLocal = UserEntity(
+                        nombre = nombre,
+                        email = email,
+                        password = hashLocal,
+                        descripcion = "Nuevo usuario de FeriaFind",
+                        horario = "9:00 - 18:00"
+                    )
                     userDao.insertUser(newUserLocal)
                     userPreferences.setLoggedIn(true)
                     userPreferences.saveUserEmail(email)
                     Result.success(Unit)
                 } else {
-                    Result.failure(Exception("Error registro: ${response.code()}"))
+                    val errorBody = response.errorBody()?.string()
+                    Log.e(TAG, "Fallo registro API: ${response.code()} - $errorBody")
+                    Result.failure(Exception("Error registro: ${response.code()} $errorBody"))
                 }
             } catch (e: Exception) {
+                Log.e(TAG, "Excepción Registro: ${e.message}")
                 Result.failure(e)
             }
         }
     }
 
-    // MÉTODOS RESTANTES (Perfil, Update)
+    // --- OBTENER PERFIL ---
     suspend fun getUserProfile(email: String): Result<UserEntity> {
         return withContext(Dispatchers.IO) {
             val user = userDao.findUserByEmail(email)
-            if (user != null) Result.success(user) else Result.failure(Exception("No user"))
+            if (user != null) Result.success(user) else Result.failure(Exception("Usuario no encontrado localmente"))
         }
     }
 
@@ -141,44 +114,71 @@ class UserRepository(
     suspend fun updateUserProfile(user: UserEntity): Result<Unit> {
         return withContext(Dispatchers.IO) {
             try {
-                // 1. Buscamos al usuario en la nube usando su email para OBTENER SU ID
-                // Ya no usamos obtenerTodosLosUsuarios()
+                // 1. Buscar ID Remoto usando el correo
                 val searchResponse = UserRetrofitInstance.api.buscarUsuarioPorEmail(user.email)
 
-                // Verificamos si lo encontramos
                 if (!searchResponse.isSuccessful || searchResponse.body() == null) {
-                    throw Exception("No se pudo sincronizar: Usuario no encontrado en la nube.")
+                    return@withContext Result.failure(Exception("No se pudo sincronizar con la nube."))
                 }
 
-                val remoteUser = searchResponse.body()!!
-                // Aquí obtenemos el ID que necesitamos para el PUT
-                val backendId = remoteUser.id
+                val backendId = searchResponse.body()!!.id // ID remoto (String)
 
-                if (backendId.isEmpty()) {
-                    throw Exception("Error: El usuario remoto no tiene ID válido.")
-                }
-
-                // 2. Preparamos los datos para actualizar
+                // 2. Preparar datos para PUT (usando nombres que espera el backend)
                 val mapaUpdate = mapOf(
                     "nombreUsuario" to user.nombre,
-                    "correoElectronico" to user.email, // Es bueno enviarlo también por si acaso
+                    "correoElectronico" to user.email,
                     "descripcion" to (user.descripcion ?: ""),
                     "horario" to (user.horario ?: ""),
                     "foto" to (user.fotoUri ?: "")
-                    // NOTA: No enviamos la contraseña aquí para no sobrescribirla con nulos
+                    // OJO: No enviamos la contraseña si no se cambió para evitar problemas
                 )
 
-                // 3. Ejecutamos la actualización (PUT)
+                // 3. Enviar a la API
                 val updateResponse = UserRetrofitInstance.api.actualizarUsuario(backendId, mapaUpdate)
 
                 if (updateResponse.isSuccessful) {
-                    // Actualizamos también la base de datos local (Room)
+                    // 4. Si todo salió bien, actualizamos la base de datos local
                     userDao.updateUser(user)
                     Result.success(Unit)
                 } else {
-                    Result.failure(Exception("Error al actualizar en servidor: ${updateResponse.code()}"))
+                    val error = updateResponse.errorBody()?.string()
+                    Result.failure(Exception("Error servidor: ${updateResponse.code()}"))
+                }
+            } catch (e: Exception) {
+                Result.failure(e)
+            }
+        }
+    }
+
+
+    // --- ELIMINAR USUARIO (Delete) ---
+    suspend fun deleteUser(email: String): Result<Unit> {
+        return withContext(Dispatchers.IO) {
+            try {
+                // 1. Buscar ID Remoto
+                val searchResponse = UserRetrofitInstance.api.buscarUsuarioPorEmail(email)
+
+                // Si el usuario no existe en la nube (error de consistencia),
+                // permitimos borrarlo localmente para no bloquear la app.
+                if (!searchResponse.isSuccessful || searchResponse.body() == null) {
+                    userDao.deleteUserByEmail(email)
+                    userPreferences.clearSession()
+                    return@withContext Result.success(Unit)
                 }
 
+                val remoteId = searchResponse.body()!!.id
+
+                // 2. Borrar en API
+                val deleteResponse = UserRetrofitInstance.api.eliminarUsuario(remoteId)
+
+                if (deleteResponse.isSuccessful) {
+                    // 3. Borrar Localmente y cerrar sesión
+                    userDao.deleteUserByEmail(email)
+                    userPreferences.clearSession()
+                    Result.success(Unit)
+                } else {
+                    Result.failure(Exception("Error al borrar en servidor"))
+                }
             } catch (e: Exception) {
                 Result.failure(e)
             }

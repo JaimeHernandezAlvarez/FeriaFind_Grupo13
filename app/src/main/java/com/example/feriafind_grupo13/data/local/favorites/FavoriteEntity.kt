@@ -1,10 +1,9 @@
 package com.example.feriafind_grupo13.data.local.favorites
 
 import androidx.room.Entity
-import androidx.room.PrimaryKey
 
-@Entity(tableName = "favorites")
+@Entity(tableName = "favorites", primaryKeys = ["vendedorId", "userEmail"])
 data class FavoriteEntity(
-    @PrimaryKey
-    val vendedorId: String // Guardamos el ID del vendedor favorito
+    val vendedorId: String,
+    val userEmail: String // Nuevo campo: Email del usuario dueño del favorito
 )

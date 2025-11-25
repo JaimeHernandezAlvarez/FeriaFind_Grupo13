@@ -4,14 +4,19 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.feriafind_grupo13.data.local.favorites.FavoriteDao
 import com.example.feriafind_grupo13.data.local.favorites.FavoriteEntity
+import com.example.feriafind_grupo13.data.repository.UserRepository
 import com.example.feriafind_grupo13.data.repository.VendedorRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import java.util.Locale
 
-class SellersViewModel(private val favoriteDao: FavoriteDao) : ViewModel() {
+class SellersViewModel(
+    private val favoriteDao: FavoriteDao,
+    private val userRepository: UserRepository // Inyectamos el repo de usuario
+) : ViewModel() {
 
     // 1. Instanciamos el Repositorio que creamos antes
     private val repository = VendedorRepository()
@@ -23,15 +28,26 @@ class SellersViewModel(private val favoriteDao: FavoriteDao) : ViewModel() {
         fetchVendedores()
         observeFavorites()
     }
-    // Observa la base de datos en tiempo real: si agregas un fav, la UI se entera sola
+
+    // Observa la base de datos en tiempo real: FILTRADO POR USUARIO
     private fun observeFavorites() {
         viewModelScope.launch {
-            favoriteDao.getAllFavorites().collect { listaFavoritos ->
-                val ids = listaFavoritos.map { it.vendedorId }.toSet()
-                _uiState.update { it.copy(favoritos = ids) }
+            // Obtenemos el email del usuario actual
+            val email = userRepository.getLoggedInUserEmail().firstOrNull()
+
+            if (email != null) {
+                // Usamos la función getUserFavorites(email) del DAO
+                favoriteDao.getUserFavorites(email).collect { listaFavoritos ->
+                    val ids = listaFavoritos.map { it.vendedorId }.toSet()
+                    _uiState.update { it.copy(favoritos = ids) }
+                }
+            } else {
+                // Si no hay usuario, limpiamos favoritos
+                _uiState.update { it.copy(favoritos = emptySet()) }
             }
         }
     }
+
     private fun fetchVendedores() {
         _uiState.update { it.copy(isLoading = true) }
         viewModelScope.launch {
@@ -50,18 +66,24 @@ class SellersViewModel(private val favoriteDao: FavoriteDao) : ViewModel() {
         _uiState.update { it.copy(searchQuery = query) }
         val todos = _uiState.value.todosLosVendedores
         val filtrados = if (query.isBlank()) todos else todos.filter {
-            it.nombre.lowercase().contains(query.lowercase())
+            it.nombre.lowercase(Locale.getDefault())
+                .contains(query.lowercase(Locale.getDefault()))
         }
         _uiState.update { it.copy(vendedoresMostrados = filtrados) }
     }
 
-    // Guarda o borra en la BD real
+    // Guarda o borra en la BD real, asociado al USUARIO ACTUAL
     fun onFavoritoClick(vendedorId: String) {
         viewModelScope.launch {
-            if (favoriteDao.isFavorite(vendedorId)) {
-                favoriteDao.removeFavorite(vendedorId)
+            // Obtenemos el email para guardar el favorito correctamente
+            val email = userRepository.getLoggedInUserEmail().firstOrNull() ?: return@launch
+
+            // Usamos isFavorite con (vendedorId, userEmail)
+            if (favoriteDao.isFavorite(vendedorId, email)) {
+                favoriteDao.removeFavorite(vendedorId, email)
             } else {
-                favoriteDao.addFavorite(FavoriteEntity(vendedorId))
+                // Creamos la entidad con ambos datos
+                favoriteDao.addFavorite(FavoriteEntity(vendedorId, email))
             }
         }
     }

@@ -22,7 +22,8 @@ import kotlinx.coroutines.launch
 @Composable
 fun MainScreen(
     userRepository: UserRepository,
-    favoriteDao: FavoriteDao
+    favoriteDao: FavoriteDao,
+    onLogout: () -> Unit = {} // Callback para manejar el cierre de sesión
 ) {
     val navController = rememberNavController()
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
@@ -40,15 +41,20 @@ fun MainScreen(
     )
     val currentScreen = menuItems.find { it.route == currentRoute } ?: MainScreenRoute.Map
 
-    // [NUEVO] Creamos las Factories aquí mismo para usarlas en las pantallas hijas
-    val userFactory = AppViewModelFactory(userRepository = userRepository)
-    val favFactory = AppViewModelFactory(favoriteDao = favoriteDao)
-    val prodFactory = favFactory
+    // --- CORRECCIÓN CRÍTICA ---
+    // Creamos una ÚNICA factory con TODAS las dependencias.
+    // SellersViewModel y FavoritesViewModel ahora necesitan AMBOS (repo y dao).
+    val appFactory = AppViewModelFactory(
+        userRepository = userRepository,
+        favoriteDao = favoriteDao
+    )
 
     ModalNavigationDrawer(
         drawerState = drawerState,
         drawerContent = {
-            AppDrawer(navController = navController, closeDrawer = { scope.launch { drawerState.close() } }
+            AppDrawer(
+                navController = navController,
+                closeDrawer = { scope.launch { drawerState.close() } }
             )
         }
     ) {
@@ -70,27 +76,36 @@ fun MainScreen(
             }
         ) { innerPadding ->
             NavHost(navController, startDestination = MainScreenRoute.Map.route, Modifier.padding(innerPadding)) {
+
                 composable(MainScreenRoute.Map.route) { MapScreen() }
 
                 composable(MainScreenRoute.Products.route) {
-                    // [CAMBIO] Usamos la factory para Productos también
-                    val viewModel: ProductsViewModel = viewModel(factory = prodFactory)
-                    ProductListScreen(viewModel = viewModel)}
+                    // Usamos la factory completa (aunque ProductsVM solo use Repo interno o inyectado)
+                    val viewModel: ProductsViewModel = viewModel(factory = appFactory)
+                    ProductListScreen(viewModel = viewModel)
+                }
 
                 composable(MainScreenRoute.Sellers.route) {
-                    // [CAMBIO] Usamos favFactory para crear el ViewModel que sabe guardar favoritos
-                    val viewModel: SellersViewModel = viewModel(factory = favFactory)
+                    // AQUÍ FALLABA: Ahora appFactory tiene userRepository Y favoriteDao
+                    val viewModel: SellersViewModel = viewModel(factory = appFactory)
                     SellerListScreen(viewModel = viewModel)
                 }
+
                 composable(MainScreenRoute.Favorites.route) {
-                    // [CAMBIO] Usamos favFactory también aquí
-                    val viewModel: FavoritesViewModel = viewModel(factory = favFactory)
+                    // AQUÍ TAMBIÉN: FavoritesViewModel necesita ambos
+                    val viewModel: FavoritesViewModel = viewModel(factory = appFactory)
                     FavoritesScreen(viewModel = viewModel)
                 }
+
                 composable(MainScreenRoute.Profile.route) {
-                    // [CAMBIO] Usamos userFactory para el perfil (necesita repositorio para subir datos a la nube)
-                    val viewModel: ProfileViewModel = viewModel(factory = userFactory)
-                    ProfileScreen(viewModel = viewModel)
+                    // ProfileViewModel necesita userRepository
+                    val viewModel: ProfileViewModel = viewModel(factory = appFactory)
+
+                    // Pasamos el callback onLogout para que al borrar la cuenta navegue fuera
+                    ProfileScreen(
+                        viewModel = viewModel,
+                        onLogout = onLogout
+                    )
                 }
             }
         }

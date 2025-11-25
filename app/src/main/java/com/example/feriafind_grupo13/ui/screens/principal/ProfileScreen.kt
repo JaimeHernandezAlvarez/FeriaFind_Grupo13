@@ -14,11 +14,11 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import androidx.core.content.FileProvider
-import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.feriafind_grupo13.ui.components.BotonPerfil
 import com.example.feriafind_grupo13.ui.components.CampoDeTextoAuth
 import com.example.feriafind_grupo13.ui.components.SelectorImagenPerfil
@@ -29,10 +29,20 @@ private const val TAG = "ProfileScreen"
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ProfileScreen(viewModel: ProfileViewModel) {
+fun ProfileScreen(viewModel: ProfileViewModel,onLogout: () -> Unit = {}) {
     val uiState by viewModel.uiState.collectAsState()
     val context = LocalContext.current
+    var mostrarDialogoEliminar by remember { mutableStateOf(false) }
 
+    // --- Snackbar para mensajes de éxito o error ---
+    val snackbarHostState = remember { SnackbarHostState() }
+    LaunchedEffect(uiState.error) {
+        uiState.error?.let {
+            snackbarHostState.showSnackbar(it)
+        }
+    }
+
+    // Función auxiliar para fotos temporales
     fun getTmpFileUri(context: Context): Uri? {
         return try {
             val tmpFile = File.createTempFile("tmp_image_", ".png", context.cacheDir).apply {
@@ -46,16 +56,13 @@ fun ProfileScreen(viewModel: ProfileViewModel) {
             null // Devolver null si hay error
         }
     }
-
+    // Launchers de cámara y galería
     var tempUri by remember { mutableStateOf<Uri?>(null) }
-
-    // Launcher para la galería
     val galleryLauncher = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri ->
         if (uri != null) {
             viewModel.onFotoChange(uri)
         }
     }
-
     val cameraLauncher = rememberLauncherForActivityResult(ActivityResultContracts.TakePicture()) { success ->
         if (success) {
             tempUri?.let { viewModel.onFotoChange(it) }
@@ -148,6 +155,44 @@ fun ProfileScreen(viewModel: ProfileViewModel) {
                     isPrimary = true
                 )
             }
+            Spacer(modifier = Modifier.height(24.dp))
+            Divider()
+            Spacer(modifier = Modifier.height(24.dp))
+
+            // Zona de Peligro: Eliminar
+            Button(
+                onClick = { mostrarDialogoEliminar = true },
+                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text("Eliminar Cuenta", color = Color.White)
+            }
         }
     }
+
+    // Diálogo de Confirmación de Borrado
+    if (mostrarDialogoEliminar) {
+        AlertDialog(
+            onDismissRequest = { mostrarDialogoEliminar = false },
+            title = { Text("¿Estás seguro?") },
+            text = { Text("Si eliminas tu cuenta, perderás todos tus datos y favoritos. Esta acción no se puede deshacer.") },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        mostrarDialogoEliminar = false
+                        viewModel.eliminarCuenta(onSuccess = onLogout)
+                    },
+                    colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.error)
+                ) {
+                    Text("Eliminar Definitivamente")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { mostrarDialogoEliminar = false }) {
+                    Text("Cancelar")
+                }
+            }
+        )
+    }
 }
+

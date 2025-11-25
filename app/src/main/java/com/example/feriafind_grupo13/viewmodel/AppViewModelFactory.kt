@@ -18,35 +18,33 @@ class AppViewModelFactory(
     @Suppress("UNCHECKED_CAST")
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
         return when {
-            // Si piden AuthViewModel, le pasamos el Repositorio
+            // 1. AuthViewModel: Requiere UserRepository
             modelClass.isAssignableFrom(AuthViewModel::class.java) -> {
                 AuthViewModel(userRepository!!) as T
             }
-            // Si piden ProfileViewModel, le pasamos el Repositorio
+            // 2. ProfileViewModel: Requiere UserRepository
             modelClass.isAssignableFrom(ProfileViewModel::class.java) -> {
                 ProfileViewModel(userRepository!!) as T
             }
-            // Si piden SellersViewModel, le pasamos el DAO de favoritos
+            // 3. SellersViewModel: Requiere FavoriteDao Y UserRepository
             modelClass.isAssignableFrom(SellersViewModel::class.java) -> {
-                SellersViewModel(favoriteDao!!) as T
+                SellersViewModel(favoriteDao!!, userRepository!!) as T
             }
-            // Si piden FavoritesViewModel, le pasamos el DAO de favoritos
+            // 4. FavoritesViewModel: Requiere FavoriteDao Y UserRepository
+            // CORRECCIÓN AQUÍ: Le pasamos AMBOS parámetros
             modelClass.isAssignableFrom(FavoritesViewModel::class.java) -> {
-                FavoritesViewModel(favoriteDao!!) as T
+                FavoritesViewModel(favoriteDao!!, userRepository!!) as T
             }
-            // MainViewModel, MapViewModel y ProductsViewModel no tienen dependencias complejas
-            // en este diseño, así que los creamos directo.
+            // 5. ProductsViewModel: Requiere ProductRepository
+            modelClass.isAssignableFrom(ProductsViewModel::class.java) -> {
+                ProductsViewModel(ProductRepository()) as T
+            }
+            // 6. ViewModels simples
             modelClass.isAssignableFrom(MainViewModel::class.java) -> {
                 MainViewModel() as T
             }
             modelClass.isAssignableFrom(MapViewModel::class.java) -> {
                 MapViewModel() as T
-            }
-            modelClass.isAssignableFrom(ProductsViewModel::class.java) -> {
-                ProductsViewModel() as T
-            }
-            modelClass.isAssignableFrom(ProductsViewModel::class.java) -> {
-                ProductsViewModel(ProductRepository()) as T
             }
             else -> throw IllegalArgumentException("Unknown ViewModel class: ${modelClass.name}")
         }

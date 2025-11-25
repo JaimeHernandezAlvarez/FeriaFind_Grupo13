@@ -2,10 +2,12 @@ package com.example.feriafind_grupo13
 
 import com.example.feriafind_grupo13.data.local.favorites.FavoriteDao
 import com.example.feriafind_grupo13.data.local.favorites.FavoriteEntity
+import com.example.feriafind_grupo13.data.repository.UserRepository
 import com.example.feriafind_grupo13.viewmodel.FavoritesViewModel
 import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
+import io.mockk.verify
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.flowOf
@@ -20,8 +22,9 @@ import org.junit.Test
 @OptIn(ExperimentalCoroutinesApi::class)
 class FavoritesViewModelTest {
 
-    // 1. Creamos un Mock del DAO
+    // 1. Mocks de las dependencias
     private val favoriteDao: FavoriteDao = mockk(relaxed = true)
+    private val userRepository: UserRepository = mockk(relaxed = true)
 
     private lateinit var viewModel: FavoritesViewModel
     private val testDispatcher = UnconfinedTestDispatcher()
@@ -30,13 +33,17 @@ class FavoritesViewModelTest {
     fun setUp() {
         Dispatchers.setMain(testDispatcher)
 
-        // 2. Simulamos que la base de datos devuelve una lista con un favorito (ID "101")
-        every { favoriteDao.getAllFavorites() } returns flowOf(
-            listOf(FavoriteEntity("101"))
+        // 2. Simulamos el email del usuario logueado
+        val emailPrueba = "test@duoc.cl"
+        every { userRepository.getLoggedInUserEmail() } returns flowOf(emailPrueba)
+
+        // 3. Simulamos que el DAO devuelve favoritos para ESTE usuario
+        every { favoriteDao.getUserFavorites(emailPrueba) } returns flowOf(
+            listOf(FavoriteEntity("101", emailPrueba))
         )
 
-        // 3. Inicializamos el ViewModel con el DAO simulado
-        viewModel = FavoritesViewModel(favoriteDao)
+        // 4. Inicializamos el ViewModel con AMBOS mocks
+        viewModel = FavoritesViewModel(favoriteDao, userRepository)
     }
 
     @After
@@ -45,24 +52,24 @@ class FavoritesViewModelTest {
     }
 
     @Test
-    fun `cargarFavoritos obtiene datos del DAO`() = runTest {
-        // THEN: Verificamos que el estado inicial tenga al menos un favorito (el "101" que simulamos)
-        // Nota: Como el ViewModel también filtra contra la API real (que no hemos mockeado aquí),
-        // la lista final 'vendedoresFavoritos' podría estar vacía si la API falla en el test.
-        // Sin embargo, podemos verificar que se llamó al DAO.
+    fun `cargarFavoritos obtiene datos del DAO usando el email`() = runTest {
+        // THEN: Verificamos que se llamó a getUserFavorites con el email correcto
+        // Nota: El repositorio de Vendedores fallará silenciosamente (try-catch) porque no está mockeado,
+        // pero lo importante aquí es probar la interacción con la base de datos local.
 
-        io.mockk.verify { favoriteDao.getAllFavorites() }
+        verify { favoriteDao.getUserFavorites("test@duoc.cl") }
     }
 
     @Test
-    fun `click en favorito llama a removeFavorite del DAO`() = runTest {
-        // GIVEN: Un ID de vendedor
+    fun `click en favorito llama a removeFavorite con ID y Email`() = runTest {
+        // GIVEN
         val id = "101"
+        val email = "test@duoc.cl"
 
-        // WHEN: Hacemos click en el botón de favorito
+        // WHEN
         viewModel.onFavoritoClick(id)
 
-        // THEN: Verificamos que el ViewModel le pidió al DAO eliminar ese ID
-        coVerify { favoriteDao.removeFavorite(id) }
+        // THEN: Verificamos que se elimina usando el ID y el Email del usuario
+        coVerify { favoriteDao.removeFavorite(id, email) }
     }
 }

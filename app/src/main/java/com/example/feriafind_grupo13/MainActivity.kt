@@ -10,6 +10,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -31,10 +32,11 @@ import com.example.feriafind_grupo13.ui.screens.autenticacion.LoginScreen
 import com.example.feriafind_grupo13.ui.screens.autenticacion.RegisterScreen
 import com.example.feriafind_grupo13.ui.screens.principal.MainScreen
 import com.example.feriafind_grupo13.ui.theme.FeriaFind_Grupo13Theme
-import com.example.feriafind_grupo13.viewmodel.AppViewModelFactory // [CAMBIO] Importamos la nueva Factory
+import com.example.feriafind_grupo13.viewmodel.AppViewModelFactory
 import com.example.feriafind_grupo13.viewmodel.AuthViewModel
 import com.example.feriafind_grupo13.viewmodel.MainViewModel
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -46,21 +48,29 @@ class MainActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
-                    val mainViewModel: MainViewModel = viewModel()
+                    // --- INICIALIZACIÓN DE DEPENDENCIAS ---
                     val context = LocalContext.current.applicationContext
+
+                    // Base de datos y DAOs
                     val db = AppDatabase.getInstance(context)
                     val userDao = db.userDao()
+                    val favoriteDao = db.favoriteDao()
+
+                    // Preferencias y Repositorio
                     val userPrefs = UserPreferences(context)
                     val repository = UserRepository(userDao, userPrefs)
-                    // Esto es vital para que la app no crashee al intentar dar like.
-                    val favoriteDao = db.favoriteDao()
-                    // Esta factory es "inteligente" y sabe inyectar el repositorio donde se necesite.
+
+                    // ViewModels y Navegación
+                    // Usamos la factory solo para AuthViewModel aquí, MainScreen crea la suya propia
                     val userFactory = AppViewModelFactory(userRepository = repository)
                     val authViewModel: AuthViewModel = viewModel(factory = userFactory)
+                    val mainViewModel: MainViewModel = viewModel()
 
                     val navController = rememberNavController()
+                    val scope = rememberCoroutineScope() // Para lanzar corrutinas en la UI (Logout)
 
-                    // Escuchar eventos de navegación del MainViewModel...
+                    // --- EVENTOS DE NAVEGACIÓN ---
+                    // Escuchar eventos de navegación del MainViewModel
                     LaunchedEffect(key1 = Unit) {
                         mainViewModel.navigationEvents.collectLatest { event ->
                             when (event) {
@@ -80,6 +90,8 @@ class MainActivity : ComponentActivity() {
                             }
                         }
                     }
+
+                    // Escuchar eventos de AuthViewModel (Login/Registro exitoso)
                     LaunchedEffect(key1 = Unit) {
                         authViewModel.navigationEvents.collectLatest { event ->
                             when (event) {
@@ -93,13 +105,13 @@ class MainActivity : ComponentActivity() {
                                         launchSingleTop = event.singleTop
                                     }
                                 }
-
                                 is NavigationEvent.PopBackStack -> navController.popBackStack()
                                 is NavigationEvent.NavigateUp -> navController.navigateUp()
                             }
                         }
                     }
-                    // Layout base con NavHost
+
+                    // --- ESTRUCTURA DE PANTALLAS ---
                     Scaffold(
                         modifier = Modifier.fillMaxSize()
                     ) { innerPadding ->
@@ -108,141 +120,80 @@ class MainActivity : ComponentActivity() {
                             startDestination = Screen.Home.route,
                             modifier = Modifier.padding(innerPadding)
                         ) {
-                            // Duración de la animación
+                            // Animaciones constantes
                             val animDuration = 400
-                            // Desplazamiento
                             val slideOffset = 1000
 
+                            // 1. PANTALLA DE INICIO (HOME)
                             composable(
                                 route = Screen.Home.route,
-                                // (Opcional) Animación para salir de Home
                                 exitTransition = {
-                                    slideOutHorizontally(
-                                        targetOffsetX = { -slideOffset },
-                                        animationSpec = tween(animDuration)
-                                    ) + fadeOut(animationSpec = tween(animDuration))
+                                    slideOutHorizontally(targetOffsetX = { -slideOffset }, animationSpec = tween(animDuration)) + fadeOut(tween(animDuration))
                                 },
-                                // (Opcional) Animación para volver a Home
                                 popEnterTransition = {
-                                    slideInHorizontally(
-                                        initialOffsetX = { -slideOffset },
-                                        animationSpec = tween(animDuration)
-                                    ) + fadeIn(animationSpec = tween(animDuration))
+                                    slideInHorizontally(initialOffsetX = { -slideOffset }, animationSpec = tween(animDuration)) + fadeIn(tween(animDuration))
                                 }
                             ) {
                                 HomeScreenCompacta(navController, mainViewModel)
-
                             }
-                            // Estas llamadas ya estaban correctas, pasando el viewModel
+
+                            // 2. PANTALLA DE REGISTRO
                             composable(
                                 route = Screen.Register.route,
-                                // Entrar a Register
                                 enterTransition = {
-                                    slideInHorizontally(
-                                        initialOffsetX = { slideOffset },
-                                        animationSpec = tween(animDuration)
-                                    ) + fadeIn(animationSpec = tween(animDuration))
+                                    slideInHorizontally(initialOffsetX = { slideOffset }, animationSpec = tween(animDuration)) + fadeIn(tween(animDuration))
                                 },
-                                // Salir de Register (hacia Main)
                                 exitTransition = {
-                                    slideOutHorizontally(
-                                        targetOffsetX = { -slideOffset },
-                                        animationSpec = tween(animDuration)
-                                    ) + fadeOut(animationSpec = tween(animDuration))
+                                    slideOutHorizontally(targetOffsetX = { -slideOffset }, animationSpec = tween(animDuration)) + fadeOut(tween(animDuration))
                                 },
-                                // Volver a Register (desde Main, no debería pasar)
-                                popEnterTransition = {
-                                    slideInHorizontally(
-                                        initialOffsetX = { -slideOffset },
-                                        animationSpec = tween(animDuration)
-                                    ) + fadeIn(animationSpec = tween(animDuration))
-                                },
-                                // Ir "atrás" de Register (hacia Home)
                                 popExitTransition = {
-                                    slideOutHorizontally(
-                                        targetOffsetX = { slideOffset },
-                                        animationSpec = tween(animDuration)
-                                    ) + fadeOut(animationSpec = tween(animDuration))
+                                    slideOutHorizontally(targetOffsetX = { slideOffset }, animationSpec = tween(animDuration)) + fadeOut(tween(animDuration))
                                 }
                             ) {
-                                RegisterScreen(
-                                    navController = navController,
-                                    viewModel = authViewModel
-                                )
-
+                                RegisterScreen(navController = navController, viewModel = authViewModel)
                             }
+
+                            // 3. PANTALLA DE LOGIN
                             composable(
                                 route = Screen.Login.route,
-                                // Entrar a Login
                                 enterTransition = {
-                                    slideInHorizontally(
-                                        initialOffsetX = { slideOffset },
-                                        animationSpec = tween(animDuration)
-                                    ) + fadeIn(animationSpec = tween(animDuration))
+                                    slideInHorizontally(initialOffsetX = { slideOffset }, animationSpec = tween(animDuration)) + fadeIn(tween(animDuration))
                                 },
-                                // Salir de Login (hacia Main)
                                 exitTransition = {
-                                    slideOutHorizontally(
-                                        targetOffsetX = { -slideOffset },
-                                        animationSpec = tween(animDuration)
-                                    ) + fadeOut(animationSpec = tween(animDuration))
+                                    slideOutHorizontally(targetOffsetX = { -slideOffset }, animationSpec = tween(animDuration)) + fadeOut(tween(animDuration))
                                 },
-                                // Volver a Login (desde Main, no debería pasar)
-                                popEnterTransition = {
-                                    slideInHorizontally(
-                                        initialOffsetX = { -slideOffset },
-                                        animationSpec = tween(animDuration)
-                                    ) + fadeIn(animationSpec = tween(animDuration))
-                                },
-                                // Ir "atrás" de Login (hacia Home)
                                 popExitTransition = {
-                                    slideOutHorizontally(
-                                        targetOffsetX = { slideOffset },
-                                        animationSpec = tween(animDuration)
-                                    ) + fadeOut(animationSpec = tween(animDuration))
+                                    slideOutHorizontally(targetOffsetX = { slideOffset }, animationSpec = tween(animDuration)) + fadeOut(tween(animDuration))
                                 }
                             ) {
-                                LoginScreen(
-                                    navController = navController,
-                                    viewModel = authViewModel
-                                )
+                                LoginScreen(navController = navController, viewModel = authViewModel)
                             }
+
+                            // 4. PANTALLA PRINCIPAL (DASHBOARD)
                             composable(
                                 route = Screen.Main.route,
-                                // Entrar a Main (desde Login/Register)
                                 enterTransition = {
-                                    slideInHorizontally(
-                                        initialOffsetX = { slideOffset },
-                                        animationSpec = tween(animDuration)
-                                    ) + fadeIn(animationSpec = tween(animDuration))
+                                    slideInHorizontally(initialOffsetX = { slideOffset }, animationSpec = tween(animDuration)) + fadeIn(tween(animDuration))
                                 },
-                                // Salir de Main (al cerrar sesión)
                                 exitTransition = {
-                                    slideOutHorizontally(
-                                        targetOffsetX = { -slideOffset },
-                                        animationSpec = tween(animDuration)
-                                    ) + fadeOut(animationSpec = tween(animDuration))
-                                },
-                                // (Estos dos no se usarán si cierras sesión con popUpTo(0),
-                                // pero es bueno tenerlos por si acaso)
-                                popEnterTransition = {
-                                    slideInHorizontally(
-                                        initialOffsetX = { -slideOffset },
-                                        animationSpec = tween(animDuration)
-                                    ) + fadeIn(animationSpec = tween(animDuration))
-                                },
-                                popExitTransition = {
-                                    slideOutHorizontally(
-                                        targetOffsetX = { slideOffset },
-                                        animationSpec = tween(animDuration)
-                                    ) + fadeOut(animationSpec = tween(animDuration))
+                                    slideOutHorizontally(targetOffsetX = { -slideOffset }, animationSpec = tween(animDuration)) + fadeOut(tween(animDuration))
                                 }
                             ) {
-                                // [MODIFICADO] Pasamos explicitamente userRepository y favoriteDao.
-                                // Esto permite que MainScreen construya los ViewModels internos correctamente.
                                 MainScreen(
                                     userRepository = repository,
-                                    favoriteDao = favoriteDao
+                                    favoriteDao = favoriteDao,
+                                    onLogout = {
+                                        // LÓGICA DE LOGOUT SEGURA
+                                        scope.launch {
+                                            // 1. Limpiamos la sesión en DataStore
+                                            userPrefs.clearSession()
+                                            // 2. Navegamos al inicio y borramos el historial
+                                            navController.navigate(Screen.Home.route) {
+                                                popUpTo(0) { inclusive = true }
+                                                launchSingleTop = true
+                                            }
+                                        }
+                                    }
                                 )
                             }
                         }

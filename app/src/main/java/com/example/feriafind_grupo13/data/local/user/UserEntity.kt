@@ -11,12 +11,9 @@ import androidx.room.PrimaryKey
 data class UserEntity(
     @PrimaryKey(autoGenerate = true)
     val id: Long = 0L,
-
     val nombre: String,
     val email: String,
     val password: String,
-
-    // --- CAMPOS NUEVOS AÑADIDOS ---
     val descripcion: String? = null,
     val horario: String? = null,
     val fotoUri: String? = null // Room no puede guardar 'Uri', lo guardamos como String
