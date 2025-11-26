@@ -26,3 +26,6 @@ Aplicación móvil para localización y gestión de ferias libres, desarrollada 
 2. Abrir en Android Studio Ladybug/Koala.
 3. Sincronizar Gradle.
 4. Ejecutar en Emulador (API 26+).
+
+5. ## 📱 Capturas
+<img width="554" height="398" alt="image" src="https://github.com/user-attachments/assets/dbb78d79-602b-4a1c-abdd-49689a1c8e01" />
