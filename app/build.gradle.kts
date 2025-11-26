@@ -18,6 +18,15 @@ android {
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
+    signingConfigs {
+        create("release") {
+            storeFile = file("contraseña importante")
+
+            storePassword = "admin2003"
+            keyAlias = "keyapkferiafind"
+            keyPassword = "admin2003"
+        }
+    }
 
     buildTypes {
         release {
@@ -26,6 +35,7 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
+            signingConfig = signingConfigs.getByName("release")
         }
     }
     compileOptions {
