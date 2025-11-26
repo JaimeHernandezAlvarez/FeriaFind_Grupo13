@@ -21,27 +21,22 @@ import org.junit.Test
 class AuthViewModelTest {
 
     // 1. Mock del Repositorio
-    // Usamos Mockk para simular el comportamiento del repositorio sin tocar la base de datos real.
     private val repository: UserRepository = mockk()
 
     // 2. ViewModel a probar
     private lateinit var viewModel: AuthViewModel
 
     // 3. Dispatcher para pruebas de corrutinas
-    // Necesario porque los ViewModels usan viewModelScope (Dispatchers.Main)
     private val testDispatcher = StandardTestDispatcher()
 
     @Before
     fun setUp() {
-        // Configuramos el dispatcher principal para que use nuestro testDispatcher
         Dispatchers.setMain(testDispatcher)
-        // Inicializamos el ViewModel pasándole el repositorio falso (mock)
         viewModel = AuthViewModel(repository)
     }
 
     @After
     fun tearDown() {
-        // Reseteamos el dispatcher al finalizar cada prueba
         Dispatchers.resetMain()
     }
 
@@ -50,9 +45,21 @@ class AuthViewModelTest {
         // GIVEN (Dado): Un escenario donde el usuario y contraseña son correctos
         val email = "test@duoc.cl"
         val pass = "12345678"
-        val fakeUser = UserEntity(1, "Test User", email, pass)
 
-        // Le enseñamos al Mock qué responder cuando le pregunten
+        // --- CORRECCIÓN AQUÍ ---
+        // Actualizamos el objeto Fake para incluir los nuevos campos del Backend.
+        // Usamos argumentos nombrados para evitar errores de orden.
+        val fakeUser = UserEntity(
+            id = 1,
+            nombre = "Test User",
+            email = email,
+            password = pass, // Simula el hash guardado
+            descripcion = "Descripción de prueba para el test", // Campo nuevo
+            horario = "09:00 - 18:00", // Campo nuevo
+            fotoUri = null // Campo nuevo
+        )
+
+        // Le enseñamos al Mock qué responder
         coEvery { repository.loginUser(email, pass) } returns Result.success(fakeUser)
 
         // WHEN (Cuando): La UI ingresa los datos y presiona login
@@ -60,46 +67,38 @@ class AuthViewModelTest {
         viewModel.onContrasenaChange(pass)
         viewModel.iniciarSesion()
 
-        // Importante: Avanzamos la corrutina para asegurar que se ejecute todo
+        // Avanzamos la corrutina
         testDispatcher.scheduler.advanceUntilIdle()
 
         // THEN (Entonces): Verificamos que pasó lo esperado
-
-        // 1. No debe haber errores en los campos
         assertEquals(null, viewModel.uiState.value.errorEmail)
         assertEquals(null, viewModel.uiState.value.errorContrasena)
-
-        // 2. No debe haber error general
         assertEquals(null, viewModel.uiState.value.generalError)
 
-        // 3. Verificamos que el ViewModel realmente llamó al repositorio
+        // Verificamos que el ViewModel llamó al repositorio
         coVerify(exactly = 1) { repository.loginUser(email, pass) }
     }
 
     @Test
     fun `iniciarSesion con email vacio muestra error`() {
-        // GIVEN: El usuario deja el email vacío
+        // GIVEN
         viewModel.onEmailChange("")
         viewModel.onContrasenaChange("12345678")
 
-        // WHEN: Intenta iniciar sesión
+        // WHEN
         viewModel.iniciarSesion()
 
-        // THEN:
-        // 1. El repositorio NO debe ser llamado (ahorramos recursos)
+        // THEN
         coVerify(exactly = 0) { repository.loginUser(any(), any()) }
-
-        // 2. El estado debe tener un mensaje de error específico
         assertEquals("El correo no puede estar vacío", viewModel.uiState.value.errorEmail)
     }
 
     @Test
     fun `iniciarSesion fallido muestra error general`() = runTest {
-        // GIVEN: Credenciales incorrectas (simulado)
+        // GIVEN
         val email = "error@duoc.cl"
         val pass = "12345678"
 
-        // El repositorio responde con fallo
         coEvery { repository.loginUser(email, pass) } returns Result.failure(Exception("Credenciales incorrectas"))
 
         viewModel.onEmailChange(email)
@@ -110,7 +109,6 @@ class AuthViewModelTest {
         testDispatcher.scheduler.advanceUntilIdle()
 
         // THEN
-        // El ViewModel debe exponer el mensaje de error para que la UI lo muestre (ej. un Snackbar)
         assertEquals("Credenciales incorrectas", viewModel.uiState.value.generalError)
     }
 }

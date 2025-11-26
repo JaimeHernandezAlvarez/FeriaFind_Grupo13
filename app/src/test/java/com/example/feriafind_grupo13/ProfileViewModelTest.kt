@@ -40,7 +40,17 @@ class ProfileViewModelTest {
     fun `carga inicial obtiene datos del usuario logueado`() = runTest {
         // GIVEN
         val email = "test@duoc.cl"
-        val userEntity = UserEntity(1, "Juan", email, "pass", "Vendedor de prueba", "9-18", null)
+
+        // CORRECCIÓN: Usamos argumentos nombrados para todos los campos
+        val userEntity = UserEntity(
+            id = 1,
+            nombre = "Juan",
+            email = email,
+            password = "pass",
+            descripcion = "Vendedor de prueba",
+            horario = "9-18",
+            fotoUri = null
+        )
 
         // Simulamos que hay un usuario logueado
         every { repository.getLoggedInUserEmail() } returns flowOf(email)
@@ -62,7 +72,18 @@ class ProfileViewModelTest {
     fun `guardarCambios actualiza el perfil en repositorio`() = runTest {
         // GIVEN
         val email = "test@duoc.cl"
-        val originalUser = UserEntity(1, "Juan", email, "pass")
+
+        // CORRECCIÓN: Aquí es donde fallaba antes (faltaban argumentos)
+        val originalUser = UserEntity(
+            id = 1,
+            nombre = "Juan",
+            email = email,
+            password = "pass",
+            // Rellenamos los campos nuevos aunque sean nulos para esta prueba
+            descripcion = null,
+            horario = null,
+            fotoUri = null
+        )
 
         every { repository.getLoggedInUserEmail() } returns flowOf(email)
         coEvery { repository.getUserProfile(email) } returns Result.success(originalUser)
