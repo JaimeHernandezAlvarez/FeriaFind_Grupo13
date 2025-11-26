@@ -9,7 +9,7 @@ data class Usuario(
     val nombre: String,
     @SerializedName("correoElectronico")
     val email: String,
-    @SerializedName("password")
+    @SerializedName("contrasena")
     val password: String = "",
     @SerializedName("descripcion")
     val descripcion: String? = null,
@@ -17,6 +17,7 @@ data class Usuario(
     val fotoUrl: String? = null,
     @SerializedName("horario")
     val horario: String? = null,
+
     val esVendedor: Boolean = false,
     val vendedoresFavoritos: List<String> = emptyList()
 )

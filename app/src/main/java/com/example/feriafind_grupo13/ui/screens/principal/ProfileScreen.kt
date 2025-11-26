@@ -1,10 +1,8 @@
 package com.example.feriafind_grupo13.ui.screens.principal
 
 import android.Manifest
-import android.content.Context
 import android.content.pm.PackageManager
 import android.net.Uri
-import android.util.Log
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.*
@@ -32,167 +30,128 @@ private const val TAG = "ProfileScreen"
 fun ProfileScreen(viewModel: ProfileViewModel,onLogout: () -> Unit = {}) {
     val uiState by viewModel.uiState.collectAsState()
     val context = LocalContext.current
-    var mostrarDialogoEliminar by remember { mutableStateOf(false) }
-
-    // --- Snackbar para mensajes de éxito o error ---
     val snackbarHostState = remember { SnackbarHostState() }
+    var showDeleteDialog by remember { mutableStateOf(false) }
+
     LaunchedEffect(uiState.error) {
-        uiState.error?.let {
-            snackbarHostState.showSnackbar(it)
-        }
-    }
-
-    // Función auxiliar para fotos temporales
-    fun getTmpFileUri(context: Context): Uri? {
-        return try {
-            val tmpFile = File.createTempFile("tmp_image_", ".png", context.cacheDir).apply {
-                createNewFile()
-                deleteOnExit()
-            }
-            val authority = "${context.packageName}.provider"
-            FileProvider.getUriForFile(context, authority, tmpFile)
-        } catch (e: Exception) {
-            Log.e(TAG, "Error creating temp file URI: ${e.message}", e)
-            null // Devolver null si hay error
-        }
-    }
-    // Launchers de cámara y galería
-    var tempUri by remember { mutableStateOf<Uri?>(null) }
-    val galleryLauncher = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri ->
-        if (uri != null) {
-            viewModel.onFotoChange(uri)
-        }
-    }
-    val cameraLauncher = rememberLauncherForActivityResult(ActivityResultContracts.TakePicture()) { success ->
-        if (success) {
-            tempUri?.let { viewModel.onFotoChange(it) }
-        }
-        tempUri = null // Limpiar la URI temporal después del intento
-    }
-    val permissionLauncher = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { isGranted ->
-        if (isGranted) {
-            tempUri = getTmpFileUri(context)
-            tempUri?.let { cameraLauncher.launch(it) }
-        } else {
-            Log.e(TAG, "Permiso de cámara denegado.")
-        }
-    }
-
-    val launchGallery = { galleryLauncher.launch("image/*") }
-    val launchCamera = {
-        val permission = Manifest.permission.CAMERA
-        if (ContextCompat.checkSelfPermission(context, permission) == PackageManager.PERMISSION_GRANTED) {
-            tempUri = getTmpFileUri(context)
-            tempUri?.let { cameraLauncher.launch(it) }
-        } else {
-            permissionLauncher.launch(permission)
-        }
-    }
+        uiState.error?.let { snackbarHostState.showSnackbar(it) } }
 
     Scaffold(
-        topBar = { TopAppBar(title = { Text("Mi Perfil") }) }
+        topBar = { TopAppBar(title = { Text("Mi Perfil") }) },
+        snackbarHost = { SnackbarHost(snackbarHostState) }
     ) { innerPadding ->
-        Column(
-            modifier = Modifier
-                .padding(innerPadding)
-                .padding(16.dp)
-                .fillMaxSize()
-                .verticalScroll(rememberScrollState()),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(16.dp)
-        ) {
-            SelectorImagenPerfil(
-                fotoUri = uiState.fotoUri,
-                onGalleryClick = launchGallery,
-                onCameraClick = { launchCamera() }
-            )
-
-            CampoDeTextoAuth(
-                value = uiState.nombre,
-                onValueChange = viewModel::onNombreChange,
-                label = "Nombre",
-                isError = false,
-                errorMessage = ""
-            )
-            CampoDeTextoAuth(
-                value = uiState.descripcion,
-                onValueChange = viewModel::onDescripcionChange,
-                label = "Descripción",
-                isError = false,
-                errorMessage = ""
-            )
-            OutlinedTextField(
-                value = uiState.correo,
-                onValueChange = { /* No editable */ },
-                label = { Text("Correo") },
-                modifier = Modifier.fillMaxWidth(),
-                readOnly = true
-            )
-            CampoDeTextoAuth(
-                value = uiState.horario,
-                onValueChange = viewModel::onHorarioChange,
-                label = "Horario",
-                isError = false,
-                errorMessage = ""
-            )
-
-            Spacer(Modifier.weight(1f))
-
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(16.dp)
-            ) {
-                BotonPerfil(
-                    text = "Restaurar",
-                    onClick = viewModel::restaurarValores,
-                    modifier = Modifier.weight(1f),
-                    isPrimary = false
-                )
-                BotonPerfil(
-                    text = "Guardar",
-                    onClick = viewModel::guardarCambios,
-                    modifier = Modifier.weight(1f),
-                    isPrimary = true
-                )
+        if (uiState.isLoading) {
+            Box(Modifier.fillMaxSize().padding(innerPadding), contentAlignment = Alignment.Center) {
+                CircularProgressIndicator()
             }
-            Spacer(modifier = Modifier.height(24.dp))
-            Divider()
-            Spacer(modifier = Modifier.height(24.dp))
-
-            // Zona de Peligro: Eliminar
-            Button(
-                onClick = { mostrarDialogoEliminar = true },
-                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error),
-                modifier = Modifier.fillMaxWidth()
+        } else {
+            Column(
+                modifier = Modifier
+                    .padding(innerPadding)
+                    .padding(16.dp)
+                    .fillMaxSize()
+                    .verticalScroll(rememberScrollState()),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
-                Text("Eliminar Cuenta", color = Color.White)
+                // --- FOTO ---
+                var tempUri by remember { mutableStateOf<Uri?>(null) }
+
+                fun createTempUri(): Uri {
+                    val tmpFile = File.createTempFile("profile_pic", ".jpg", context.cacheDir).apply {
+                        createNewFile()
+                        deleteOnExit()
+                    }
+                    return FileProvider.getUriForFile(context, "${context.packageName}.provider", tmpFile)
+                }
+
+                val cameraLauncher = rememberLauncherForActivityResult(ActivityResultContracts.TakePicture()) { success ->
+                    if (success && tempUri != null) viewModel.onFotoChange(tempUri)
+                }
+                val galleryLauncher = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri ->
+                    if (uri != null) viewModel.onFotoChange(uri)
+                }
+                val permissionLauncher = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { isGranted ->
+                    if (isGranted) {
+                        tempUri = createTempUri()
+                        cameraLauncher.launch(tempUri!!)
+                    }
+                }
+
+                SelectorImagenPerfil(
+                    fotoUri = uiState.fotoUri,
+                    onGalleryClick = { galleryLauncher.launch("image/*") },
+                    onCameraClick = {
+                        if (ContextCompat.checkSelfPermission(context, Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED) {
+                            tempUri = createTempUri()
+                            cameraLauncher.launch(tempUri!!)
+                        } else {
+                            permissionLauncher.launch(Manifest.permission.CAMERA)
+                        }
+                    }
+                )
+
+                // --- CAMPOS ---
+                CampoDeTextoAuth(uiState.nombre, viewModel::onNombreChange, "Nombre", false, "")
+
+                OutlinedTextField(
+                    value = uiState.descripcion,
+                    onValueChange = viewModel::onDescripcionChange,
+                    label = { Text("Descripción / Bio") },
+                    modifier = Modifier.fillMaxWidth().height(100.dp),
+                    maxLines = 4
+                )
+
+                OutlinedTextField(
+                    value = uiState.correo,
+                    onValueChange = {},
+                    label = { Text("Correo (Fijo)") },
+                    modifier = Modifier.fillMaxWidth(),
+                    readOnly = true,
+                    enabled = false
+                )
+
+                CampoDeTextoAuth(uiState.horario, viewModel::onHorarioChange, "Horario", false, "")
+
+                Spacer(Modifier.weight(1f))
+
+                Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+                    BotonPerfil("Restaurar", viewModel::restaurarValores, Modifier.weight(1f), false)
+                    BotonPerfil("Guardar", viewModel::guardarCambios, Modifier.weight(1f), true)
+                }
+
+                Spacer(Modifier.height(24.dp))
+                Divider()
+                Spacer(Modifier.height(24.dp))
+
+                Button(
+                    onClick = { showDeleteDialog = true },
+                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text("Eliminar Cuenta", color = Color.White)
+                }
             }
         }
     }
 
-    // Diálogo de Confirmación de Borrado
-    if (mostrarDialogoEliminar) {
+    if (showDeleteDialog) {
         AlertDialog(
-            onDismissRequest = { mostrarDialogoEliminar = false },
-            title = { Text("¿Estás seguro?") },
-            text = { Text("Si eliminas tu cuenta, perderás todos tus datos y favoritos. Esta acción no se puede deshacer.") },
+            onDismissRequest = { showDeleteDialog = false },
+            title = { Text("¿Eliminar cuenta?") },
+            text = { Text("Esta acción es irreversible. Se borrarán todos tus datos del servidor.") },
             confirmButton = {
                 TextButton(
                     onClick = {
-                        mostrarDialogoEliminar = false
+                        showDeleteDialog = false
                         viewModel.eliminarCuenta(onSuccess = onLogout)
                     },
                     colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.error)
-                ) {
-                    Text("Eliminar Definitivamente")
-                }
+                ) { Text("Eliminar") }
             },
             dismissButton = {
-                TextButton(onClick = { mostrarDialogoEliminar = false }) {
-                    Text("Cancelar")
-                }
+                TextButton(onClick = { showDeleteDialog = false }) { Text("Cancelar") }
             }
         )
     }
 }
-

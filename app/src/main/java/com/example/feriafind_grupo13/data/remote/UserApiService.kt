@@ -14,11 +14,11 @@ import retrofit2.http.Query
 interface UserApiService {
     //REGISTRO
     @POST("api/v1/usuarios")
-    suspend fun registrarUsuario(@Body usuario: Map<String, String>): Response<Usuario>
+    suspend fun registrarUsuario(@Body usuario:Any): Response<Usuario>
 
     // LOGIN
     @POST("api/v1/usuarios/login")
-    suspend fun loginUsuario(@Body credenciales: Map<String, String>): Response<Usuario>
+    suspend fun loginUsuario(@Body credenciales: Any): Response<Usuario>
 
     // BUSCAR
     @GET("api/v1/usuarios/buscar")
@@ -28,9 +28,9 @@ interface UserApiService {
     @PUT("api/v1/usuarios/{id}")
     suspend fun actualizarUsuario(
         @Path("id") id: String,
-        @Body usuario: Map<String, String>
+        @Body usuario: Any
     ): Response<Usuario>
-    // --- NUEVO: ELIMINAR (DELETE) ---
+    // --- ELIMINAR ---
     @DELETE("api/v1/usuarios/{id}")
     suspend fun eliminarUsuario(@Path("id") id: String): Response<Void>
 }
