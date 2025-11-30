@@ -12,6 +12,9 @@ Aplicación móvil para localización y gestión de ferias libres, desarrollada 
 3. **Geolocalización:** Mapa interactivo (OpenStreetMap).
 4. **Catálogo:** Búsqueda y filtrado de productos y vendedores.
 5. **API Externa:** Integración con Open-Meteo para clima en tiempo real.
+6. Administración (CRUD Completo): - Creación, modificación y eliminación de Productos.
+-Creación, modificación y eliminación de Vendedores.
+-Interfaz de gestión integrada mediante menús contextuales en las tarjetas.
 
 ## 🔗 Endpoints & Arquitectura
 - **App Móvil:** MVVM, Retrofit, Room, DataStore.
