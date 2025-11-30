@@ -39,7 +39,9 @@ fun FavoritesScreen(viewModel: FavoritesViewModel = viewModel()) {
                     TarjetaVendedor(
                         vendedor = vendedor,
                         esFavorito = true, // Siempre es favorito en esta pantalla
-                        onFavoritoClick = { viewModel.onFavoritoClick(vendedor.id) }
+                        onFavoritoClick = { viewModel.onFavoritoClick(vendedor.id) },
+                        onEditClick = { },
+                        onDeleteClick = { }
                     )
                 }
             }
