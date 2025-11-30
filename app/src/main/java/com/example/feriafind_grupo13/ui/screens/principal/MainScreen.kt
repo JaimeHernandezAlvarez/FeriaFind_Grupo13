@@ -7,14 +7,19 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navArgument
 import com.example.feriafind_grupo13.data.local.favorites.FavoriteDao
 import com.example.feriafind_grupo13.data.repository.UserRepository
 import com.example.feriafind_grupo13.navigation.MainScreen as MainScreenRoute
+import com.example.feriafind_grupo13.navigation.Screen
 import com.example.feriafind_grupo13.ui.components.AppDrawer
+import com.example.feriafind_grupo13.ui.screens.admin.AddEditProductScreen
+import com.example.feriafind_grupo13.ui.screens.admin.AddEditSellerScreen
 import com.example.feriafind_grupo13.viewmodel.*
 import kotlinx.coroutines.launch
 
@@ -41,13 +46,14 @@ fun MainScreen(
     )
     val currentScreen = menuItems.find { it.route == currentRoute } ?: MainScreenRoute.Map
 
-    // --- CORRECCIÓN CRÍTICA ---
-    // Creamos una ÚNICA factory con TODAS las dependencias.
-    // SellersViewModel y FavoritesViewModel ahora necesitan AMBOS (repo y dao).
     val appFactory = AppViewModelFactory(
         userRepository = userRepository,
         favoriteDao = favoriteDao
     )
+
+    // ViewModels compartidos (para mantener estado al navegar)
+    val productsViewModel: ProductsViewModel = viewModel(factory = appFactory)
+    val sellersViewModel: SellersViewModel = viewModel(factory = appFactory)
 
     ModalNavigationDrawer(
         drawerState = drawerState,
@@ -80,32 +86,30 @@ fun MainScreen(
                 composable(MainScreenRoute.Map.route) { MapScreen() }
 
                 composable(MainScreenRoute.Products.route) {
-                    // Usamos la factory completa (aunque ProductsVM solo use Repo interno o inyectado)
                     val viewModel: ProductsViewModel = viewModel(factory = appFactory)
-                    ProductListScreen(viewModel = viewModel)
+                    ProductListScreen(viewModel = productsViewModel, navController = navController)
                 }
-
                 composable(MainScreenRoute.Sellers.route) {
-                    // AQUÍ FALLABA: Ahora appFactory tiene userRepository Y favoriteDao
                     val viewModel: SellersViewModel = viewModel(factory = appFactory)
-                    SellerListScreen(viewModel = viewModel)
+                    SellerListScreen(viewModel = sellersViewModel, navController = navController)
                 }
-
                 composable(MainScreenRoute.Favorites.route) {
-                    // AQUÍ TAMBIÉN: FavoritesViewModel necesita ambos
                     val viewModel: FavoritesViewModel = viewModel(factory = appFactory)
                     FavoritesScreen(viewModel = viewModel)
                 }
-
                 composable(MainScreenRoute.Profile.route) {
-                    // ProfileViewModel necesita userRepository
                     val viewModel: ProfileViewModel = viewModel(factory = appFactory)
-
-                    // Pasamos el callback onLogout para que al borrar la cuenta navegue fuera
-                    ProfileScreen(
-                        viewModel = viewModel,
-                        onLogout = onLogout
-                    )
+                    ProfileScreen(viewModel = viewModel, onLogout = onLogout)
+                }
+                composable(route = Screen.AddEditProduct.route, arguments = listOf(navArgument("productId") { type = NavType.IntType; defaultValue = -1 })
+                ) { backStackEntry ->
+                    val productId = backStackEntry.arguments?.getInt("productId") ?: -1
+                    AddEditProductScreen(navController, productsViewModel, productId)
+                }
+                composable(route = Screen.AddEditSeller.route, arguments = listOf(navArgument("sellerId") { type = NavType.StringType; defaultValue = "" })
+                ) { backStackEntry ->
+                    val sellerId = backStackEntry.arguments?.getString("sellerId") ?: ""
+                    AddEditSellerScreen(navController, sellersViewModel, sellerId)
                 }
             }
         }

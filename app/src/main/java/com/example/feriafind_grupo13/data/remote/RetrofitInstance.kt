@@ -5,8 +5,6 @@ import retrofit2.converter.gson.GsonConverterFactory
 
 object RetrofitInstance {
 
-    // URL base de tu backend desplegado en Render
-    // Nota: Retrofit siempre requiere que termine en '/'
     private const val BASE_URL = "https://microvend.onrender.com/"
 
     val api: ApiService by lazy {

@@ -1,11 +1,11 @@
 package com.example.feriafind_grupo13.ui.components
 
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -13,12 +13,10 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
-import com.example.feriafind_grupo13.R
-import com.example.feriafind_grupo13.data.model.Vendedor
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
-
-
+import com.example.feriafind_grupo13.R
+import com.example.feriafind_grupo13.data.model.Vendedor
 /**
  * Tarjeta reutilizable para mostrar la información de un vendedor en una lista.
  *
@@ -30,12 +28,14 @@ import coil.request.ImageRequest
 fun TarjetaVendedor(
     vendedor: Vendedor,
     esFavorito: Boolean,
-    onFavoritoClick: () -> Unit
+    onFavoritoClick: () -> Unit,
+    onEditClick: () -> Unit,
+    onDeleteClick: () -> Unit
 ) {
+    var menuExpanded by remember { mutableStateOf(false) }
+
     Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = 8.dp),
+        modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
     ) {
@@ -43,49 +43,53 @@ fun TarjetaVendedor(
             modifier = Modifier.padding(12.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // --- IMAGEN DEL VENDEDOR (Coil) ---
             AsyncImage(
                 model = ImageRequest.Builder(LocalContext.current)
-                    .data(vendedor.fotoUrl) // URL que viene de tu API
+                    .data(vendedor.fotoUrl)
                     .crossfade(true)
-                    .error(R.drawable.logo) // Logo si falla la carga
-                    .placeholder(R.drawable.logo) // Logo mientras carga
+                    .error(R.drawable.logo)
+                    .placeholder(R.drawable.logo)
                     .build(),
                 contentDescription = "Foto de ${vendedor.nombre}",
                 contentScale = ContentScale.Crop,
-                modifier = Modifier
-                    .size(80.dp)
-                    .clip(MaterialTheme.shapes.medium)
+                modifier = Modifier.size(80.dp).clip(MaterialTheme.shapes.medium)
             )
-
             Spacer(modifier = Modifier.width(16.dp))
 
-// --- INFORMACIÓN ---
             Column(modifier = Modifier.weight(1f)) {
-                // Usamos 'nombreVendedor' tal como está en tu modelo
-                Text(
-                    text = vendedor.nombre,
-                    style = MaterialTheme.typography.titleMedium
-                )
+                Text(text = vendedor.nombre, style = MaterialTheme.typography.titleMedium)
                 Spacer(modifier = Modifier.height(4.dp))
-
-                // Usamos el operador ?.let por si la descripción es nula
                 vendedor.descripcion?.let {
-                    Text(
-                        text = it,
-                        style = MaterialTheme.typography.bodyMedium,
-                        maxLines = 2
-                    )
+                    Text(text = it, style = MaterialTheme.typography.bodyMedium, maxLines = 2)
                 }
             }
-
-            // --- BOTÓN FAVORITO ---
+            Column(horizontalAlignment = Alignment.CenterHorizontally){
             IconButton(onClick = onFavoritoClick) {
                 Icon(
                     imageVector = Icons.Default.Star,
                     contentDescription = "Favorito",
                     tint = if (esFavorito) Color.Yellow else Color.Gray
                 )
+            }
+                // MENÚ DE 3 PUNTOS
+                Box {
+                    IconButton(onClick = { menuExpanded = true }) {
+                        Icon(Icons.Default.MoreVert, contentDescription = "Opciones")
+                    }
+                    DropdownMenu(
+                        expanded = menuExpanded,
+                        onDismissRequest = { menuExpanded = false }
+                    ) {
+                        DropdownMenuItem(
+                            text = { Text("Modificar") },
+                            onClick = { menuExpanded = false; onEditClick() }
+                        )
+                        DropdownMenuItem(
+                            text = { Text("Eliminar") },
+                            onClick = { menuExpanded = false; onDeleteClick() }
+                        )
+                    }
+                }
             }
         }
     }

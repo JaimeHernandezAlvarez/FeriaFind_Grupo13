@@ -3,6 +3,7 @@ package com.example.feriafind_grupo13.viewmodel
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.feriafind_grupo13.data.model.Producto
 import com.example.feriafind_grupo13.data.repository.ProductRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -19,29 +20,17 @@ class ProductsViewModel(private val repository: ProductRepository = ProductRepos
     }
     private fun fetchProductos() {
         _uiState.update { it.copy(isLoading = true) }
-
         viewModelScope.launch {
             try {
                 Log.d("API_PRODUCTOS", "Cargando productos...")
                 val lista = repository.getProductos()
                 Log.d("API_PRODUCTOS", "Productos recibidos: ${lista.size}")
-
-                _uiState.update {
-                    it.copy(
-                        todosLosProductos = lista,
-                        productosMostrados = lista,
-                        isLoading = false,
-                        errorMessage = null
-                    )
+                    _uiState.update {
+                        it.copy(todosLosProductos = lista, productosMostrados = lista, isLoading = false, errorMessage = null)
                 }
-            } catch (e: Exception) {
-                Log.e("API_PRODUCTOS", "Error: ${e.message}")
+            } catch (e: Exception) { Log.e("API_PRODUCTOS", "Error: ${e.message}")
                 _uiState.update {
-                    it.copy(
-                        isLoading = false,
-                        errorMessage = "Error al cargar: ${e.message}"
-                    )
-                }
+                    it.copy(isLoading = false, errorMessage = "Error al cargar: ${e.message}") }
             }
         }
     }
@@ -52,13 +41,30 @@ class ProductsViewModel(private val repository: ProductRepository = ProductRepos
     private fun filtrarProductos() {
         val query = _uiState.value.searchQuery
         val todos = _uiState.value.todosLosProductos
-        val filtrados = if (query.isBlank()) { todos
-        } else {
-            todos.filter {
-                it.nombre.lowercase(Locale.getDefault())
-                    .contains(query.lowercase(Locale.getDefault()))
-            }
+        val filtrados = if (query.isBlank()) { todos } else { todos.filter {
+                it.nombre.lowercase(Locale.getDefault()).contains(query.lowercase(Locale.getDefault())) }
         }
         _uiState.update { it.copy(productosMostrados = filtrados) }
+    }
+    // --- CRUD ---
+    fun crearProducto(producto: Producto) {
+        viewModelScope.launch {
+            repository.createProducto(producto)
+            fetchProductos() // Recargar lista
+        }
+    }
+
+    fun actualizarProducto(producto: Producto) {
+        viewModelScope.launch {
+            repository.updateProducto(producto)
+            fetchProductos()
+        }
+    }
+
+    fun eliminarProducto(id: Int) {
+        viewModelScope.launch {
+            repository.deleteProducto(id)
+            fetchProductos()
+        }
     }
 }
