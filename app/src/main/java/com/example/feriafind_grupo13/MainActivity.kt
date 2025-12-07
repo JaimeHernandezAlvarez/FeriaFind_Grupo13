@@ -64,7 +64,7 @@ class MainActivity : ComponentActivity() {
                     // Usamos la factory solo para AuthViewModel aquí, MainScreen crea la suya propia
                     val userFactory = AppViewModelFactory(userRepository = repository)
                     val authViewModel: AuthViewModel = viewModel(factory = userFactory)
-                    val mainViewModel: MainViewModel = viewModel()
+                    val mainViewModel: MainViewModel = viewModel(factory = userFactory)
 
                     val navController = rememberNavController()
                     val scope = rememberCoroutineScope() // Para lanzar corrutinas en la UI (Logout)
